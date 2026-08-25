@@ -1,0 +1,13 @@
+:root {
+  --ink: #171714;
+  --cream: #f3efe4;
+  --terracotta: #b65f43;
+  --vine: #35483a;
+  --wine: #632f3d;
+  --chalk: #fbf9f3;
+  --page-gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --display: clamp(3.25rem, 10vw, 9rem);
+  --headline: clamp(2.5rem, 7vw, 6.5rem);
+  --body: clamp(1rem, 1.35vw, 1.25rem);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}

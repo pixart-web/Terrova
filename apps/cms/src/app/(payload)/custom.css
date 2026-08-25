@@ -1,0 +1,9 @@
+:root {
+  --theme-elevation-0: #fbf9f3;
+  --theme-elevation-1000: #171714;
+  --theme-success-500: #35483a;
+}
+
+.nav__brand {
+  font-family: Georgia, serif;
+}

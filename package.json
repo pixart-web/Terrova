@@ -1,0 +1,28 @@
+{
+  "name": "terrova",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @terrova/web --filter @terrova/cms dev",
+    "dev:web": "pnpm --filter @terrova/web dev",
+    "dev:cms": "pnpm --filter @terrova/cms dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "cms:generate:types": "pnpm --filter @terrova/cms generate:types",
+    "cms:generate:schema": "pnpm --filter @terrova/cms generate:db-schema",
+    "cms:migrate:create": "pnpm --filter @terrova/cms migrate:create"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}

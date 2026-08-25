@@ -1,0 +1,427 @@
+* {
+  box-sizing: border-box;
+}
+html {
+  background: var(--ink);
+  scroll-behavior: auto;
+}
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--body);
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0.12;
+  background-image: repeating-radial-gradient(
+    circle at 20% 30%,
+    transparent 0,
+    rgba(255, 255, 255, 0.08) 0.6px,
+    transparent 1px,
+    transparent 5px
+  );
+  mix-blend-mode: soft-light;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  background: var(--chalk);
+  color: var(--ink);
+  padding: 0.75rem 1rem;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+.site-header {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1.6rem var(--page-gutter);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.site-header nav {
+  display: flex;
+  gap: clamp(1rem, 2.5vw, 2.75rem);
+}
+.site-header nav a,
+.account-link {
+  opacity: 0.72;
+  transition: opacity 0.25s ease;
+}
+.site-header nav a:hover,
+.account-link:hover {
+  opacity: 1;
+}
+.wordmark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  text-transform: none;
+  letter-spacing: -0.04em;
+}
+.account-link {
+  justify-self: end;
+}
+.hero {
+  min-height: 100svh;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-content: end;
+  padding: 8rem var(--page-gutter) clamp(3rem, 8vh, 7rem);
+  isolation: isolate;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 72% 45%, rgba(182, 95, 67, 0.33), transparent 28%),
+    linear-gradient(130deg, #171714 12%, #22221d 55%, #10100f);
+}
+.hero__kicker {
+  position: absolute;
+  top: 7.5rem;
+  left: var(--page-gutter);
+  right: var(--page-gutter);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.58;
+}
+.hero h1,
+.editorial-page h1 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--display);
+  font-weight: 400;
+  line-height: 0.78;
+  letter-spacing: -0.075em;
+  position: relative;
+  z-index: 1;
+}
+.hero h1 em {
+  color: var(--terracotta);
+  font-weight: 400;
+}
+.hero__intro {
+  width: min(35rem, 76vw);
+  margin: 2.5rem 0 1.6rem;
+  line-height: 1.55;
+  color: rgba(243, 239, 228, 0.72);
+}
+.text-link {
+  display: inline-flex;
+  gap: 0.9rem;
+  align-items: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  border-bottom: 1px solid rgba(243, 239, 228, 0.35);
+  padding-bottom: 0.55rem;
+}
+.hero__orb {
+  position: absolute;
+  width: clamp(17rem, 36vw, 35rem);
+  aspect-ratio: 1;
+  right: 7vw;
+  top: 16vh;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(99, 47, 61, 0.95), rgba(32, 24, 24, 0.55));
+  box-shadow:
+    inset -4rem -4rem 8rem rgba(0, 0, 0, 0.34),
+    0 4rem 8rem rgba(0, 0, 0, 0.22);
+  display: grid;
+  place-items: center;
+  z-index: -1;
+}
+.hero__orb span {
+  font-family: Georgia, serif;
+  font-size: clamp(7rem, 17vw, 15rem);
+  color: rgba(243, 239, 228, 0.13);
+}
+.hero__scroll {
+  position: absolute;
+  right: var(--page-gutter);
+  bottom: 3rem;
+  writing-mode: vertical-rl;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.42;
+}
+.scene-rail {
+  background: var(--cream);
+  color: var(--ink);
+}
+.scene-frame {
+  min-height: 165vh;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(18rem, 1.1fr);
+  gap: 6vw;
+  padding: 0 var(--page-gutter);
+  border-top: 1px solid rgba(23, 23, 20, 0.14);
+  position: relative;
+}
+.scene-frame__copy {
+  align-self: start;
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  padding: 6rem 0;
+}
+.scene-frame__index,
+.scene-frame__eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.scene-frame__index {
+  position: absolute;
+  top: 2.5rem;
+  color: var(--terracotta);
+}
+.scene-frame__eyebrow {
+  margin: 0 0 1.5rem;
+  opacity: 0.55;
+}
+.scene-frame h2 {
+  max-width: 9ch;
+  margin: 0;
+  font:
+    400 var(--headline)/0.9 Georgia,
+    'Times New Roman',
+    serif;
+  letter-spacing: -0.06em;
+}
+.scene-frame__body {
+  max-width: 31rem;
+  margin-top: 2rem;
+  line-height: 1.6;
+  color: rgba(23, 23, 20, 0.7);
+}
+.scene-frame__body .text-link {
+  margin-top: 1.5rem;
+  border-color: rgba(23, 23, 20, 0.3);
+}
+.scene-frame__visual {
+  height: 100vh;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.bottle-study {
+  position: relative;
+  width: min(34vw, 28rem);
+  aspect-ratio: 0.78;
+  display: grid;
+  place-items: center;
+}
+.bottle-study__halo {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  opacity: 0.92;
+  box-shadow: inset -2rem -3rem 5rem rgba(0, 0, 0, 0.22);
+}
+.bottle-study--terracotta .bottle-study__halo {
+  background: var(--terracotta);
+}
+.bottle-study--wine .bottle-study__halo {
+  background: var(--wine);
+}
+.bottle-study--vine .bottle-study__halo {
+  background: var(--vine);
+}
+.bottle-study--cream .bottle-study__halo {
+  background: var(--chalk);
+  border: 1px solid rgba(23, 23, 20, 0.14);
+}
+.bottle-study__bottle {
+  width: 22%;
+  height: 72%;
+  border-radius: 2rem 2rem 1rem 1rem;
+  background: linear-gradient(90deg, #161a12, #35412d 45%, #10120e);
+  box-shadow: 2rem 2rem 4rem rgba(23, 23, 20, 0.3);
+  position: relative;
+}
+.bottle-study__bottle::before {
+  content: '';
+  position: absolute;
+  width: 43%;
+  height: 20%;
+  left: 28%;
+  top: -13%;
+  background: #171b15;
+  border-radius: 0.2rem 0.2rem 0 0;
+}
+.bottle-study__bottle::after {
+  content: 'TERROVA';
+  position: absolute;
+  left: -35%;
+  top: 47%;
+  width: 170%;
+  padding: 1.2rem 0;
+  text-align: center;
+  background: var(--chalk);
+  color: var(--ink);
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+}
+.bottle-study__label {
+  position: absolute;
+  right: 8%;
+  bottom: 4%;
+  font:
+    italic 1.2rem Georgia,
+    serif;
+}
+.final-scene {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 7rem var(--page-gutter);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(99, 47, 61, 0.75), transparent 35%), var(--ink);
+}
+.final-scene h2 {
+  margin: 0 0 3rem;
+  font:
+    400 clamp(2.8rem, 7vw, 7rem)/0.9 Georgia,
+    serif;
+  letter-spacing: -0.06em;
+}
+.cta {
+  border: 1px solid rgba(243, 239, 228, 0.45);
+  padding: 1.1rem 1.8rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition:
+    color 0.3s,
+    background 0.3s;
+}
+.cta:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+.editorial-page {
+  min-height: 100svh;
+  padding: clamp(10rem, 20vh, 14rem) var(--page-gutter) 8rem;
+  background: radial-gradient(circle at 75% 32%, rgba(99, 47, 61, 0.4), transparent 25%);
+}
+.editorial-page__eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+}
+.editorial-page h1 {
+  max-width: 10ch;
+  font-size: clamp(4rem, 11vw, 10rem);
+}
+.editorial-page__body {
+  max-width: 38rem;
+  margin: 4rem 0 0 auto;
+  line-height: 1.65;
+  color: rgba(243, 239, 228, 0.75);
+}
+.editorial-page__note {
+  border-left: 1px solid var(--terracotta);
+  padding-left: 1.5rem;
+  margin: 2rem 0 3rem;
+  font-size: 0.86rem;
+}
+.site-footer {
+  min-height: 16rem;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 2rem;
+  align-items: end;
+  padding: 5rem var(--page-gutter) 2rem;
+  border-top: 1px solid rgba(243, 239, 228, 0.15);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+@media (max-width: 800px) {
+  .site-header {
+    grid-template-columns: 1fr auto;
+  }
+  .site-header nav {
+    display: none;
+  }
+  .hero {
+    align-content: center;
+    padding-top: 11rem;
+  }
+  .hero h1 {
+    font-size: clamp(3.6rem, 17vw, 6.5rem);
+  }
+  .hero__orb {
+    right: -28vw;
+    top: 22vh;
+    width: 80vw;
+    opacity: 0.78;
+  }
+  .hero__scroll {
+    display: none;
+  }
+  .scene-frame {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    padding-top: 5rem;
+  }
+  .scene-frame__copy {
+    position: relative;
+    min-height: auto;
+    padding: 5rem 0 0;
+  }
+  .scene-frame__visual {
+    height: min(80vh, 42rem);
+  }
+  .bottle-study {
+    width: min(82vw, 28rem);
+  }
+  .site-footer {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

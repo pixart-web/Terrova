@@ -1,0 +1,6 @@
+.next
+node_modules
+pnpm-lock.yaml
+apps/cms/src/payload-types.ts
+apps/cms/src/payload-generated-schema.ts
+apps/cms/src/app/(payload)/admin/importMap.js
