@@ -19,7 +19,7 @@ flowchart LR
 ### `apps/web`
 
 - Next.js App Router with React Server Components by default.
-- Interactive animation is isolated in `CinematicHomepage`, the current client boundary.
+- Homepage content remains server-rendered. Each production scene owns a minimal client motion boundary around its semantic Server Component content.
 - GSAP and ScrollTrigger drive scene timelines and desktop pinning.
 - Lenis provides smooth scrolling only when reduced motion is not requested.
 - Framer Motion is reserved for small UI feedback, not page orchestration.
@@ -48,7 +48,7 @@ flowchart LR
 
 ## Scene system
 
-The homepage is a scene rail, not a generic section grid. Each `SceneFrame` exposes stable copy and visual regions plus data attributes for timeline orchestration. Desktop scenes are prepared for pinned visuals and scroll-scrubbed parallax. Reduced-motion users receive static editorial composition, and mobile avoids costly pinning.
+The homepage is a scene rail, not a generic section grid. Production scenes use explicit semantic components and colocated timeline factories on the shared motion runtime. `SceneFrame` remains the structural placeholder for later scenes only. Reduced-motion users receive complete static editorial compositions, and mobile avoids long pinned origin sequences.
 
 Scene sequence:
 

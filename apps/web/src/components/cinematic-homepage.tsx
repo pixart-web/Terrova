@@ -2,23 +2,11 @@ import Link from 'next/link'
 
 import { SceneFrame } from '@terrova/ui'
 import { DiscoverScene } from './discover/discover-scene'
+import { OriginsScene } from './origins/origins-scene'
 import { SmoothScroll } from './smooth-scroll'
+import { UnboxScene } from './unbox/unbox-scene'
 
 const scenes = [
-  {
-    index: '02',
-    eyebrow: 'Unbox',
-    title: 'A ritual, composed in layers.',
-    body: 'Three bottles, one place in focus, and editorial objects that turn opening the box into an evening.',
-    tone: 'wine',
-  },
-  {
-    index: '03',
-    eyebrow: 'Origins',
-    title: 'Meet the hands behind the land.',
-    body: 'Independent growers. Singular parcels. Honest stories, traced from vineyard to your table.',
-    tone: 'vine',
-  },
   {
     index: '04',
     eyebrow: 'Process',
@@ -57,16 +45,18 @@ export function CinematicHomepage() {
     <main id="main-content" className="cinematic-home">
       <SmoothScroll />
       <DiscoverScene />
+      <UnboxScene />
+      <OriginsScene />
 
-      <div className="scene-rail" aria-label="Future journey scenes">
+      <div className="scene-rail" aria-label="Later journey scenes">
         {scenes.map((scene, index) => (
           <SceneFrame
             key={scene.index}
-            id={index === 0 ? 'unbox' : undefined}
+            id={index === 0 ? 'process' : undefined}
             index={scene.index}
             eyebrow={scene.eyebrow}
             title={scene.title}
-            visual={<BottleStudy tone={scene.tone} ordinal={index + 2} />}
+            visual={<BottleStudy tone={scene.tone} ordinal={index + 4} />}
           >
             <p>{scene.body}</p>
             {index === 4 && (

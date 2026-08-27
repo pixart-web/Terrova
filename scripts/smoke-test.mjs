@@ -49,6 +49,54 @@ assert.match(
   /data-reduced-motion-ready="true"/i,
   'Static/reduced-motion fallback is missing',
 )
+assert.match(homepageHTML, /A new discovery, every month\./i, 'Unbox core heading is missing')
+assert.match(
+  homepageHTML,
+  /We search beyond familiar labels/i,
+  'Unbox supporting narrative is missing',
+)
+assert.match(homepageHTML, /Every bottle begins somewhere\./i, 'Origins core heading is missing')
+
+for (const origin of [
+  'Douro',
+  'Portugal',
+  'Loire',
+  'France',
+  'Etna',
+  'Italy',
+  'Priorat',
+  'Spain',
+]) {
+  assert.match(homepageHTML, new RegExp(origin, 'i'), `Origin narrative missing: ${origin}`)
+}
+
+for (const scene of ['unbox', 'origins']) {
+  assert.match(
+    homepageHTML,
+    new RegExp(`data-motion-scene="${scene}"[^>]*data-motion-mode="static"`, 'i'),
+    `Static narrative marker missing: ${scene}`,
+  )
+}
+
+const orderedSceneMarkers = [
+  'data-motion-scene="discover"',
+  'data-motion-scene="unbox"',
+  'data-motion-scene="origins"',
+  'id="process"',
+]
+let previousScenePosition = -1
+
+for (const marker of orderedSceneMarkers) {
+  const position = homepageHTML.indexOf(marker)
+  assert.ok(position > previousScenePosition, `Homepage scene order is incorrect at ${marker}`)
+  previousScenePosition = position
+}
+
+assert.doesNotMatch(
+  homepageHTML,
+  /data-motion-scene="(?:process|plans|choose-your-journey)"/i,
+  'Production motion leaked into a later homepage scene',
+)
 
 for (const destination of ['/boxes', '/producers', '/journal', '/gifts', '/account']) {
   assert.match(
