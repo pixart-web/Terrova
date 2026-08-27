@@ -4,15 +4,18 @@
   "private": true,
   "packageManager": "pnpm@11.19.0",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
+    "env:setup": "node scripts/setup-env.mjs",
     "dev": "pnpm --parallel --filter @terrova/web --filter @terrova/cms dev",
     "dev:web": "pnpm --filter @terrova/web dev",
     "dev:cms": "pnpm --filter @terrova/cms dev",
     "build": "pnpm -r --if-present build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
+    "test:functional": "node scripts/smoke-test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d postgres",

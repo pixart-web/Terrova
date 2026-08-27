@@ -68,6 +68,12 @@ Scene sequence:
 - Validate every future write operation server-side; client affordances are not authorization.
 - Webhooks, Stripe checkout and customer authentication are intentionally out of scope for this foundation.
 
+## Quality gates
+
+Every pull request targets `main` through the foundation CI workflow. The required local/CI sequence is formatting, lint, typecheck and production builds, followed by functional smoke tests against the two running applications and PostgreSQL. The smoke suite covers the public route shells, homepage scene contract, Payload admin, collection availability and the protected Users collection.
+
+Generated Next.js declaration files are committed for TypeScript discovery but excluded from Prettier because Next owns and rewrites their formatting during builds.
+
 ## Next increments
 
 1. Add hostname-based brand resolution and typed Payload queries.

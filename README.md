@@ -4,7 +4,7 @@ Premium, cinematic, multi-brand wine subscription platform. The repository is a 
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 22.13 or newer
 - pnpm 11
 - Docker Desktop with the WSL 2 backend
 
@@ -12,6 +12,7 @@ Premium, cinematic, multi-brand wine subscription platform. The repository is a 
 
 ```bash
 pnpm install
+pnpm env:setup
 pnpm db:up
 pnpm dev
 ```
@@ -21,9 +22,9 @@ Open:
 - Web experience: http://localhost:3000
 - Payload admin: http://localhost:3001/admin
 
-On the first admin visit, create the initial Payload user. In development, Payload pushes the code-first collection schema to the local PostgreSQL database automatically.
+`pnpm env:setup` creates local environment files from the committed examples without overwriting existing files. The checked-in development defaults also allow a first boot without this step, but explicit local files make configuration visible and easy to change.
 
-The repository includes a safe local `apps/cms/.env` for first boot. Copy the relevant `.env.example` files and replace every secret before using a shared or production environment.
+On the first admin visit, create the initial Payload user. In development, Payload pushes the code-first collection schema to the local PostgreSQL database automatically. Replace every example secret before using a shared or production environment.
 
 ## Commands
 
@@ -32,14 +33,26 @@ pnpm dev                 # web + CMS
 pnpm dev:web             # frontend only
 pnpm dev:cms             # Payload only
 pnpm build               # production builds
+pnpm check               # format, lint, typecheck, and build
 pnpm lint                # ESLint across apps
 pnpm typecheck           # TypeScript across apps
 pnpm format:check        # Prettier verification
+pnpm test:functional     # smoke test running web/CMS routes and collection access
 pnpm cms:generate:types  # regenerate Payload types
 pnpm cms:generate:schema # regenerate the PostgreSQL schema snapshot
 pnpm cms:migrate:create  # create a production database migration
 pnpm db:down             # stop local PostgreSQL
 ```
+
+## Functional verification
+
+With PostgreSQL and both applications running, execute the dependency-free smoke suite in a second terminal:
+
+```bash
+pnpm test:functional
+```
+
+It verifies every public route, the seven homepage scene boundaries, Payload admin availability, all public foundation collections, and authentication on the Users collection. Pull requests run the same suite in GitHub Actions after format, lint, typecheck, and production builds pass.
 
 ## Repository map
 
