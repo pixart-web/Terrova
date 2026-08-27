@@ -4,7 +4,7 @@ Premium, cinematic, multi-brand wine subscription platform. The repository is a 
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 22.13 or newer
 - pnpm 11
 - Docker Desktop with the WSL 2 backend
 

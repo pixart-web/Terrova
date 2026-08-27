@@ -52,7 +52,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
@@ -71,4 +71,4 @@ jobs:
 
       - name: Print application logs on failure
         if: failure()
-        run: cat /tmp/terrova-dev.log
+        run: cat /tmp/terrova-dev.log || true
