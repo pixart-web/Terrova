@@ -43,7 +43,7 @@ const homepageHTML = await homepage.text()
 
 assert.match(homepageHTML, /Discover wine/i, 'Discover headline is missing')
 assert.match(homepageHTML, /beyond the label\./i, 'Discover signature is missing')
-assert.match(homepageHTML, />Explore the boxes</i, 'Discover primary CTA is missing')
+assert.match(homepageHTML, /Explore the boxes/i, 'Discover primary CTA is missing')
 assert.match(
   homepageHTML,
   /data-reduced-motion-ready="true"/i,
