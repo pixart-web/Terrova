@@ -41,6 +41,23 @@ async function waitFor(url, label) {
 const homepage = await waitFor(`${webURL}/`, 'Web application')
 const homepageHTML = await homepage.text()
 
+assert.match(homepageHTML, /Discover wine/i, 'Discover headline is missing')
+assert.match(homepageHTML, /beyond the label\./i, 'Discover signature is missing')
+assert.match(homepageHTML, /Explore the boxes/i, 'Discover primary CTA is missing')
+assert.match(
+  homepageHTML,
+  /data-reduced-motion-ready="true"/i,
+  'Static/reduced-motion fallback is missing',
+)
+
+for (const destination of ['/boxes', '/producers', '/journal', '/gifts', '/account']) {
+  assert.match(
+    homepageHTML,
+    new RegExp(`href="${destination}"`, 'i'),
+    `Navigation destination missing: ${destination}`,
+  )
+}
+
 for (const scene of [
   'Discover',
   'Unbox',

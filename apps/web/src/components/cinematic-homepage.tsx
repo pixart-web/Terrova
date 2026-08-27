@@ -1,22 +1,10 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { motion, useReducedMotion } from 'framer-motion'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Lenis from 'lenis'
 
 import { SceneFrame } from '@terrova/ui'
+import { DiscoverScene } from './discover/discover-scene'
+import { SmoothScroll } from './smooth-scroll'
 
 const scenes = [
-  {
-    index: '01',
-    eyebrow: 'Discover',
-    title: 'Wine without the usual script.',
-    body: 'Follow texture, weather and instinct. Each edition begins with a question, never a score.',
-    tone: 'terracotta',
-  },
   {
     index: '02',
     eyebrow: 'Unbox',
@@ -65,96 +53,20 @@ function BottleStudy({ tone, ordinal }: { tone: string; ordinal: number }) {
 }
 
 export function CinematicHomepage() {
-  const root = useRef<HTMLElement>(null)
-  const reduceMotion = useReducedMotion()
-
-  useEffect(() => {
-    if (!root.current || reduceMotion) return
-
-    gsap.registerPlugin(ScrollTrigger)
-    const lenis = new Lenis({ duration: 1.05, smoothWheel: true })
-    const onTick = (time: number) => lenis.raf(time * 1000)
-    gsap.ticker.add(onTick)
-    gsap.ticker.lagSmoothing(0)
-    lenis.on('scroll', ScrollTrigger.update)
-
-    const context = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>('[data-scene]').forEach((scene) => {
-        const copy = scene.querySelector('.scene-frame__copy')
-        const visual = scene.querySelector<HTMLElement>('[data-scene-visual]')
-        const parallax = scene.querySelector<HTMLElement>('[data-parallax]')
-
-        gsap
-          .timeline({
-            scrollTrigger: { trigger: scene, start: 'top 70%', end: 'bottom 35%', scrub: 0.7 },
-          })
-          .fromTo(copy, { y: 80, opacity: 0.25 }, { y: 0, opacity: 1, ease: 'none' })
-          .fromTo(
-            parallax,
-            { yPercent: 10, rotate: -2 },
-            { yPercent: -8, rotate: 2, ease: 'none' },
-            0,
-          )
-
-        if (visual && window.matchMedia('(min-width: 900px)').matches) {
-          ScrollTrigger.create({
-            trigger: scene,
-            start: 'top top',
-            end: 'bottom bottom',
-            pin: visual,
-            pinSpacing: false,
-          })
-        }
-      })
-    }, root)
-
-    return () => {
-      context.revert()
-      lenis.destroy()
-      gsap.ticker.remove(onTick)
-    }
-  }, [reduceMotion])
-
   return (
-    <main id="main-content" ref={root} className="cinematic-home">
-      <section className="hero" aria-labelledby="hero-title">
-        <div className="hero__kicker">
-          <span>01 / First edition</span>
-          <span>Portugal, Atlantic edge</span>
-        </div>
-        <h1 id="hero-title">
-          Wine,
-          <br />
-          <em>shaped by place.</em>
-        </h1>
-        <p className="hero__intro">
-          A subscription for curious drinkers. Small-production bottles, human stories and a new
-          landscape at your door.
-        </p>
-        <motion.div
-          whileHover={reduceMotion ? undefined : { x: 8 }}
-          transition={{ duration: 0.28 }}
-        >
-          <Link className="text-link" href="/boxes">
-            Enter the first edition <span aria-hidden="true">→</span>
-          </Link>
-        </motion.div>
-        <div className="hero__orb" aria-hidden="true">
-          <span>T</span>
-        </div>
-        <p className="hero__scroll" aria-hidden="true">
-          Scroll to follow the journey
-        </p>
-      </section>
+    <main id="main-content" className="cinematic-home">
+      <SmoothScroll />
+      <DiscoverScene />
 
-      <div className="scene-rail">
+      <div className="scene-rail" aria-label="Future journey scenes">
         {scenes.map((scene, index) => (
           <SceneFrame
             key={scene.index}
+            id={index === 0 ? 'unbox' : undefined}
             index={scene.index}
             eyebrow={scene.eyebrow}
             title={scene.title}
-            visual={<BottleStudy tone={scene.tone} ordinal={index + 1} />}
+            visual={<BottleStudy tone={scene.tone} ordinal={index + 2} />}
           >
             <p>{scene.body}</p>
             {index === 4 && (
