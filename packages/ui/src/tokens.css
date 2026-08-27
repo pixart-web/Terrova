@@ -9,5 +9,7 @@
   --display: clamp(3.25rem, 10vw, 9rem);
   --headline: clamp(2.5rem, 7vw, 6.5rem);
   --body: clamp(1rem, 1.35vw, 1.25rem);
+  --font-display: 'Iowan Old Style', 'Baskerville', 'Times New Roman', serif;
+  --font-interface: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -1,34 +1,35 @@
 import type { Metadata, Viewport } from 'next'
-import Link from 'next/link'
+
+import { SiteHeader } from '@/components/site-header'
 
 import '@terrova/ui/tokens.css'
 import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: { default: 'Terrova — Wine, shaped by place', template: '%s — Terrova' },
-  description: 'A cinematic wine subscription shaped by place, people and discovery.',
+  title: { default: 'Terrova — Discover wine beyond the label', template: '%s — Terrova' },
+  description: 'Remarkable wines, producers and places — delivered as a monthly journey.',
   openGraph: {
-    title: 'Terrova — Wine, shaped by place',
-    description: 'A cinematic wine subscription shaped by place, people and discovery.',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Terrova — Wine, shaped by place.' }],
+    title: 'Terrova — Discover wine beyond the label',
+    description: 'Remarkable wines, producers and places — delivered as a monthly journey.',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Terrova — Discover wine beyond the label.',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Terrova — Wine, shaped by place',
-    description: 'A cinematic wine subscription shaped by place, people and discovery.',
+    title: 'Terrova — Discover wine beyond the label',
+    description: 'Remarkable wines, producers and places — delivered as a monthly journey.',
     images: ['/og.png'],
   },
 }
 
 export const viewport: Viewport = { colorScheme: 'dark', themeColor: '#171714' }
-
-const navigation = [
-  ['Boxes', '/boxes'],
-  ['Producers', '/producers'],
-  ['Journal', '/journal'],
-  ['Gifts', '/gifts'],
-] as const
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -37,21 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
-        <header className="site-header">
-          <Link className="wordmark" href="/" aria-label="Terrova home">
-            Terrova
-          </Link>
-          <nav aria-label="Primary navigation">
-            {navigation.map(([label, href]) => (
-              <Link key={href} href={href}>
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <Link className="account-link" href="/account">
-            Account
-          </Link>
-        </header>
+        <SiteHeader />
         {children}
         <footer className="site-footer">
           <p className="wordmark">Terrova</p>
