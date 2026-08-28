@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The first three homepage scenes currently use original CSS/SVG art-direction studies. They define composition, scale, layering and replacement boundaries without introducing unlicensed photography or coupling scene mechanics to temporary artwork.
+The first five homepage scenes currently use original CSS/SVG art-direction studies. They define composition, scale, layering and replacement boundaries without introducing unlicensed photography or coupling scene mechanics to temporary artwork.
 
 ## Replaceable components
 
@@ -15,13 +15,15 @@ The first three homepage scenes currently use original CSS/SVG art-direction stu
 | `OriginLandscape`   | SVG contours, gradient sun and CSS ridges | Four art-directed landscape stills or restrained loops with desktop/mobile crops             |
 | `ProducerImageSlot` | Initials-based documentary frame          | Approved producer portraits with rights, focal metadata and responsive sources               |
 
+Process reuses `IndividualBottle` and `TerrovaBox` to create continuity from Origins without adding a new media dependency. Choose Your Journey reuses one `IndividualBottle` instance per plan in a shared stage; these are art-direction studies, not representations of plan inclusions.
+
 ## Interface contract
 
 - Product assets remain decorative in scene markup; all narrative text exists as semantic HTML outside the artwork.
 - Replacement components must retain their current outer class names and data attributes or update the colocated timeline at the same time.
 - Bottle and box sources need transparent backgrounds, stable intrinsic dimensions and art-directed mobile crops where applicable.
 - Landscape sources must support the palette tone supplied by `OriginNarrative` without embedding region-specific animation logic.
-- Final media should be served through Payload Media with explicit width/height, modern formats and responsive sizes. CMS rendering is outside M3.
+- Final media should be served through Payload Media with explicit width/height, modern formats and responsive sizes. CMS media rendering is outside M4.
 
 ## Known limitations
 
@@ -30,3 +32,4 @@ The first three homepage scenes currently use original CSS/SVG art-direction stu
 - Landscapes intentionally communicate terrain and atmosphere without claiming documentary specificity.
 - Producer slots are spatial placeholders; they do not represent the named demo producers.
 - The cross-scene bottle handoff is a matched visual cut between isolated scene roots, not one persistent 3D object.
+- Journey bottle tones distinguish editorial atmospheres only. They do not communicate bottle count, inventory or contractual plan contents.

@@ -9,16 +9,18 @@ Motion is progressive enhancement. Terrova renders complete semantic content bef
 - `SmoothScroll` is the single page-level client entry point for Lenis. Its lifecycle is reusable and contains no Discover-specific selectors.
 - `useSmoothScroll` integrates Lenis with the GSAP ticker and `ScrollTrigger.update`, disables itself for `prefers-reduced-motion`, and guarantees cleanup across navigation, Strict Mode and HMR.
 - `useSceneTimeline` is the reusable scene lifecycle. It creates a scoped GSAP context, selects Full or Reduced mode through media queries, refreshes ScrollTrigger after setup and reverts every timeline on cleanup.
-- Discover, Unbox and Origins each own a colocated timeline factory passed into the generic scene lifecycle. Scene selectors never enter the shared runtime.
+- Discover, Unbox, Origins, Process and Choose Your Journey each own a colocated timeline factory passed into the generic scene lifecycle. Scene selectors never enter the shared runtime.
 
 ## Cross-scene continuity
 
-The first three scenes use separate DOM roots and timelines so navigation/HMR cleanup remains deterministic. Continuity is created through matched visual anchors and overlapping colour fields rather than one global master timeline:
+The production scenes use separate DOM roots and timelines so navigation/HMR cleanup remains deterministic. Continuity is created through matched visual anchors and overlapping colour fields rather than one global master timeline:
 
 1. Discover ends with its bottle centred against Ink and introduces the Unbox label.
 2. Unbox begins through a dark-to-Chalk transition, opens the box and separates three bottles. The centre Vine bottle remains dominant while the outer bottles recede.
 3. Origins begins with the same scale, tone and vertical bottle axis. That anchor reduces in scale as provenance content replaces the commerce object.
-4. Origins resolves into a Chalk gradient and a semantic `#process` boundary. Process itself remains structurally unchanged.
+4. Origins resolves into a Chalk gradient. Process continues that paper field as one four-act typographic sequence around the inherited bottle axis: search, curate, deliver and taste.
+5. Process hands its Terracotta/Wine line into the dark Choose Your Journey stage. One plan occupies the stage at a time while the adjacent plan names remain directly operable.
+6. Choose Your Journey ends at the existing semantic `#your-taste` placeholder. Your Taste and Final CTA remain outside the production scene system in M4.
 
 This matched-anchor strategy avoids cross-component element ownership, layout reads in animation loops and timeline coupling between scenes.
 
@@ -26,28 +28,28 @@ This matched-anchor strategy avoids cross-component element ownership, layout re
 
 ### Full
 
-Landscape viewports at 1024px and above use the complete scroll narrative. Discover stays sticky for its product reveal. Unbox uses a longer pinned 2.5D sequence for the box lid, interior and staggered bottles. Origins uses a pinned editorial stage where four typed records replace one another while the selected bottle and landscape layers move at independent restrained rates.
+Landscape viewports at 1024px and above use the complete scroll narrative. Discover stays sticky for its product reveal. Unbox uses a longer pinned 2.5D sequence for the box lid, interior and staggered bottles. Origins uses a pinned editorial stage where four typed records replace one another while the selected bottle and landscape layers move at independent restrained rates. Process pins one shared composition while four semantic list entries replace one another. Choose Your Journey pins one shared plan stage; plan changes are explicit UI interactions rather than scroll-controlled purchasing decisions.
 
 ### Reduced
 
-Portrait and sub-1024px viewports retain a shorter Discover/Unbox composition with smaller transform ranges. Origins becomes a readable vertical editorial sequence instead of reproducing the desktop pinned metaphor. Mobile navigation uses native `details`/`summary`, so it is keyboard-operable without client state.
+Portrait and sub-1024px viewports retain a shorter Discover/Unbox composition with smaller transform ranges. Origins and Process become readable vertical editorial sequences instead of reproducing the desktop pinned metaphor. Choose Your Journey keeps its three touch-sized selectors above one shared plan stage. Mobile navigation uses native `details`/`summary`, so it is keyboard-operable without client state.
 
 ### Static
 
-When `prefers-reduced-motion: reduce` is active, Lenis and scene timelines do not initialize. Discover collapses to one editorial viewport, Unbox shows the box already open with the complete bottle set, and Origins renders all four records in document order. Handoffs remain readable. The same compositions are the no-JavaScript fallback through the server-rendered `data-motion-mode="static"` state.
+When `prefers-reduced-motion: reduce` is active, Lenis and scene timelines do not initialize. Discover collapses to one editorial viewport, Unbox shows the box already open with the complete bottle set, Origins and Process render all records in document order, and Choose Your Journey exposes all three plan narratives and CTAs. Handoffs remain readable. The same compositions are the no-JavaScript fallback through the server-rendered `data-motion-mode="static"` state.
 
 ## Content boundary prepared for Payload
 
-Scene mechanics do not import CMS types. `UnboxNarrative` contains the edition-level copy and bottle labels. `OriginNarrative` contains stable identifiers, place/country, coordinates, producer metadata, editorial copy and an art-direction tone. `originJourney` is demo content only; a future content adapter can map Payload records into this shape without changing timeline selectors or scene markup.
+Scene mechanics do not import CMS types. `UnboxNarrative` contains the edition-level copy and bottle labels. `OriginNarrative` contains stable identifiers, place/country, coordinates, producer metadata, editorial copy and an art-direction tone. `ProcessStep` keeps the four-act sequence data-driven. `PlanPresentation` describes only editorial plan content and numeric money; it deliberately excludes bottle counts and payment-provider identifiers. These demo records can be replaced by a Payload adapter without changing timeline selectors or scene markup.
 
 ## Performance and accessibility
 
 - Animation is limited to transforms and opacity; scroll handlers do not read and write layout per frame.
 - The SVG bottle and contour study have fixed view boxes and require no network request, preventing CLS.
 - Decorative atmosphere and product theatre are hidden from assistive technology; the temporary bottle SVG has descriptive text only in source documentation because its rendered parent is decorative.
-- All links retain visible `:focus-visible` treatment and meaningful labels.
+- All links and plan selectors retain visible `:focus-visible` treatment and meaningful labels. The selected plan is exposed with `aria-pressed`, not colour alone; the Most Popular label remains textual and accessible.
 - No WebGL, canvas runtime, video or large raster media is included in this increment.
-- Unbox and Origins animate only transform and opacity. No layout measurements occur inside animation ticks.
+- All scene timelines animate only transform and opacity. No layout measurements occur inside animation ticks.
 
 ## Temporary asset contract
 

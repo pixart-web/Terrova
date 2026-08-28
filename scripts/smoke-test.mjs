@@ -56,6 +56,12 @@ assert.match(
   'Unbox supporting narrative is missing',
 )
 assert.match(homepageHTML, /Every bottle begins somewhere\./i, 'Origins core heading is missing')
+assert.match(
+  homepageHTML,
+  /We find\. We curate\. You discover\./i,
+  'Process core heading is missing',
+)
+assert.match(homepageHTML, /Choose your journey\./i, 'Journey core heading is missing')
 
 for (const origin of [
   'Douro',
@@ -70,7 +76,7 @@ for (const origin of [
   assert.match(homepageHTML, new RegExp(origin, 'i'), `Origin narrative missing: ${origin}`)
 }
 
-for (const scene of ['unbox', 'origins']) {
+for (const scene of ['unbox', 'origins', 'process', 'choose-your-journey']) {
   assert.match(
     homepageHTML,
     new RegExp(`data-motion-scene="${scene}"[^>]*data-motion-mode="static"`, 'i'),
@@ -78,11 +84,37 @@ for (const scene of ['unbox', 'origins']) {
   )
 }
 
+const orderedProcessSteps = ['We search', 'We curate', 'We deliver', 'You taste']
+let previousProcessStepPosition = -1
+
+for (const step of orderedProcessSteps) {
+  const position = homepageHTML.indexOf(step)
+  assert.ok(position > previousProcessStepPosition, `Process step order is incorrect at ${step}`)
+  previousProcessStepPosition = position
+}
+
+for (const [plan, price, positioning] of [
+  ['Taster', '€29,99', 'Start somewhere unexpected.'],
+  ['Drinker', '€49,99', 'Go further.'],
+  ['Premium', '€69,99', 'Drink something remarkable.'],
+]) {
+  assert.match(homepageHTML, new RegExp(plan, 'i'), `Journey plan missing: ${plan}`)
+  assert.match(homepageHTML, new RegExp(price, 'i'), `Journey price missing: ${price}`)
+  assert.match(homepageHTML, new RegExp(positioning, 'i'), `Journey positioning missing: ${plan}`)
+}
+
+assert.match(homepageHTML, /Most Popular/i, 'Accessible Most Popular label is missing')
+assert.match(homepageHTML, /href="\/boxes\?plan=taster"/i, 'Taster CTA is missing')
+assert.match(homepageHTML, /href="\/boxes\?plan=drinker"/i, 'Drinker CTA is missing')
+assert.match(homepageHTML, /href="\/boxes\?plan=premium"/i, 'Premium CTA is missing')
+
 const orderedSceneMarkers = [
   'data-motion-scene="discover"',
   'data-motion-scene="unbox"',
   'data-motion-scene="origins"',
-  'id="process"',
+  'data-motion-scene="process"',
+  'data-motion-scene="choose-your-journey"',
+  'id="your-taste"',
 ]
 let previousScenePosition = -1
 
@@ -94,8 +126,8 @@ for (const marker of orderedSceneMarkers) {
 
 assert.doesNotMatch(
   homepageHTML,
-  /data-motion-scene="(?:process|plans|choose-your-journey)"/i,
-  'Production motion leaked into a later homepage scene',
+  /data-motion-scene="(?:your-taste|final-cta)"/i,
+  'Production motion leaked beyond the M4 boundary',
 )
 
 for (const destination of ['/boxes', '/producers', '/journal', '/gifts', '/account']) {
