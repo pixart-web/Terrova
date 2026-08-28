@@ -46,9 +46,11 @@ flowchart LR
 
 `packages/commerce` defines checkout and subscription ports but contains no Stripe SDK and performs no payment calls. Payload stores optional external provider references on plans and SKUs. A future Stripe adapter must translate those domain contracts without leaking Stripe objects into UI or CMS collection types.
 
+The homepage plan presentation is a separate, typed read model. It owns editorial positioning, CTA labels, discovery attributes and numeric `Money`, while omitting bottle counts and Stripe identifiers. A future content adapter will map Payload `Plans` into this read model; a later checkout action may pass the stable plan code into `CommerceGateway`. Rendering a plan never imports Stripe and selecting one performs no payment call.
+
 ## Scene system
 
-The homepage is a scene rail, not a generic section grid. Production scenes use explicit semantic components and colocated timeline factories on the shared motion runtime. `SceneFrame` remains the structural placeholder for later scenes only. Reduced-motion users receive complete static editorial compositions, and mobile avoids long pinned origin sequences.
+The homepage is a scene rail, not a generic section grid. Production scenes through Choose Your Journey use explicit semantic components and colocated timeline factories on the shared motion runtime. `SceneFrame` remains the structural placeholder for Your Taste only. Reduced-motion users receive complete static editorial compositions, and mobile avoids long pinned Process/Origins sequences. Choose Your Journey is one shared editorial stage with explicit, accessible plan selection—not a reusable pricing-card grid.
 
 Scene sequence:
 
