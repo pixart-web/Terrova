@@ -48,9 +48,13 @@ flowchart LR
 
 The homepage plan presentation is a separate, typed read model. It owns editorial positioning, CTA labels, discovery attributes and numeric `Money`, while omitting bottle counts and Stripe identifiers. A future content adapter will map Payload `Plans` into this read model; a later checkout action may pass the stable plan code into `CommerceGateway`. Rendering a plan never imports Stripe and selecting one performs no payment call.
 
+### Wine Profile boundary
+
+`TasteSignal` is a presentation read model for the homepage narrative only. It can describe a place, grape, style or saved memory together with optional wine context, a coarse sentiment and display weight. The demo records are immutable local content: they are not customer data, ratings or recommendations. A future authenticated Wine Profile may map persisted customer signals into this shape behind a dedicated customer/content adapter, but no persistence, account API or personalization algorithm exists in the homepage runtime.
+
 ## Scene system
 
-The homepage is a scene rail, not a generic section grid. Production scenes through Choose Your Journey use explicit semantic components and colocated timeline factories on the shared motion runtime. `SceneFrame` remains the structural placeholder for Your Taste only. Reduced-motion users receive complete static editorial compositions, and mobile avoids long pinned Process/Origins sequences. Choose Your Journey is one shared editorial stage with explicit, accessible plan selection—not a reusable pricing-card grid.
+The homepage is a scene rail, not a generic section grid. All seven production scenes use explicit semantic components and colocated timeline factories on the shared motion runtime. Reduced-motion users receive complete static editorial compositions, and mobile avoids long pinned Process/Origins/Taste sequences. Choose Your Journey is one shared editorial stage with explicit, accessible plan selection—not a reusable pricing-card grid. Final CTA routes both commercial paths to `/boxes`, the current safe pre-checkout boundary; it performs no commerce mutation.
 
 Scene sequence:
 
