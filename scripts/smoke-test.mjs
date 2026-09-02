@@ -62,6 +62,22 @@ assert.match(
   'Process core heading is missing',
 )
 assert.match(homepageHTML, /Choose your journey\./i, 'Journey core heading is missing')
+assert.match(
+  homepageHTML,
+  /Every bottle you try teaches us something about your taste\./i,
+  'Your Taste core heading is missing',
+)
+assert.match(homepageHTML, /A future Wine Profile/i, 'Wine Profile concept is missing')
+assert.match(
+  homepageHTML,
+  /Your discoveries build a richer picture/i,
+  'Wine Profile supporting promise is missing',
+)
+assert.match(
+  homepageHTML,
+  /Your next favourite wine is still out there\./i,
+  'Final CTA heading is missing',
+)
 
 for (const origin of [
   'Douro',
@@ -76,12 +92,28 @@ for (const origin of [
   assert.match(homepageHTML, new RegExp(origin, 'i'), `Origin narrative missing: ${origin}`)
 }
 
-for (const scene of ['unbox', 'origins', 'process', 'choose-your-journey']) {
+for (const scene of [
+  'unbox',
+  'origins',
+  'process',
+  'choose-your-journey',
+  'your-taste',
+  'final-cta',
+]) {
   assert.match(
     homepageHTML,
     new RegExp(`data-motion-scene="${scene}"[^>]*data-motion-mode="static"`, 'i'),
     `Static narrative marker missing: ${scene}`,
   )
+}
+
+for (const signal of [
+  'Volcanic energy',
+  'Atlantic edges',
+  'Touriga Franca',
+  'Mineral · savoury · bright',
+]) {
+  assert.match(homepageHTML, new RegExp(signal, 'i'), `Taste signal missing: ${signal}`)
 }
 
 const orderedProcessSteps = ['We search', 'We curate', 'We deliver', 'You taste']
@@ -114,7 +146,8 @@ const orderedSceneMarkers = [
   'data-motion-scene="origins"',
   'data-motion-scene="process"',
   'data-motion-scene="choose-your-journey"',
-  'id="your-taste"',
+  'data-motion-scene="your-taste"',
+  'data-motion-scene="final-cta"',
 ]
 let previousScenePosition = -1
 
@@ -124,10 +157,14 @@ for (const marker of orderedSceneMarkers) {
   previousScenePosition = position
 }
 
+assert.match(homepageHTML, /Join Terrova/i, 'Primary final CTA is missing')
+assert.match(homepageHTML, /Explore the boxes/i, 'Secondary final path is missing')
+assert.match(homepageHTML, /href="\/boxes"/i, 'Final CTA route boundary is missing')
+assert.doesNotMatch(homepageHTML, /href="[^"]*checkout/i, 'Checkout route leaked into homepage')
 assert.doesNotMatch(
   homepageHTML,
-  /data-motion-scene="(?:your-taste|final-cta)"/i,
-  'Production motion leaked beyond the M4 boundary',
+  /My Terrova|Stripe|recommendation engine/i,
+  'Out-of-scope customer or commerce functionality leaked into homepage',
 )
 
 for (const destination of ['/boxes', '/producers', '/journal', '/gifts', '/account']) {
@@ -145,7 +182,7 @@ for (const scene of [
   'Process',
   'Choose your journey',
   'Your taste',
-  'Begin here',
+  'The next discovery',
 ]) {
   assert.match(homepageHTML, new RegExp(scene, 'i'), `Homepage scene missing: ${scene}`)
 }
