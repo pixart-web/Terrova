@@ -1,3 +1,5 @@
+import { resendEmailsEndpoint } from '@terrova/config'
+
 export type TransactionalTemplate =
   'welcome' | 'payment_problem' | 'cancellation' | 'gift_notification'
 
@@ -16,7 +18,7 @@ export async function sendTransactionalEmail(input: {
 }) {
   const key = process.env.RESEND_API_KEY
   if (!key) return { id: 'development-noop' }
-  const response = await fetch(process.env.RESEND_API_URL ?? 'https://api.resend.com/emails', {
+  const response = await fetch(resendEmailsEndpoint(process.env.RESEND_API_URL), {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({

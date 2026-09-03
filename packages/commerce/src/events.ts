@@ -72,6 +72,8 @@ export async function processCommerceEvent(
       cancelAtPeriodEnd: Boolean(data.cancel_at_period_end),
       customerId: string(meta.customerId),
       brandId: string(meta.brandId),
+      providerEventAt: event.createdAt,
+      providerEventId: event.id,
     })
     return 'processed'
   }
@@ -89,6 +91,8 @@ export async function processCommerceEvent(
       amountPaid: Number(data.amount_paid ?? 0),
       currency: (string(data.currency)?.toUpperCase() ?? 'EUR') as 'EUR' | 'GBP' | 'USD',
       paid: event.type === 'invoice.paid',
+      providerEventAt: event.createdAt,
+      providerEventId: event.id,
     })
     return 'processed'
   }

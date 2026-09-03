@@ -3,6 +3,27 @@ import assert from 'node:assert/strict'
 const webURL = process.env.TERROVA_WEB_URL ?? 'http://127.0.0.1:3000'
 const cmsURL = process.env.TERROVA_CMS_URL ?? 'http://127.0.0.1:3001'
 const timeoutMs = Number(process.env.TERROVA_SMOKE_TIMEOUT_MS ?? 120_000)
+const serviceToken = process.env.CMS_SERVICE_TOKEN
+
+function relationshipID(value) {
+  return value && typeof value === 'object' ? value.id : value
+}
+
+async function cmsRequest(path, { method = 'GET', body, token, service = false } = {}) {
+  const headers = { Accept: 'application/json' }
+  if (body) headers['Content-Type'] = 'application/json'
+  if (token) headers.Authorization = `JWT ${token}`
+  if (service) {
+    assert.ok(serviceToken, 'CMS_SERVICE_TOKEN is required for integration checks')
+    headers['x-terrova-service-token'] = serviceToken
+  }
+  const response = await fetch(`${cmsURL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return response
+}
 
 const publicRoutes = [
   '/',
@@ -253,7 +274,280 @@ for (const collection of privateCollections) {
   }
 }
 
+// Direct Payload API authorization regression checks. These deliberately bypass Next.js routes.
+const login = await cmsRequest('/api/customers/login', {
+  method: 'POST',
+  body: {
+    email: process.env.SEED_TEST_CUSTOMER_EMAIL,
+    password: process.env.SEED_TEST_CUSTOMER_PASSWORD,
+  },
+})
+assert.equal(login.status, 200, 'Seed customer could not authenticate directly with Payload')
+const { token: customerToken, user: customer } = await login.json()
+const customerBrand = relationshipID(customer.brand)
+
+const foreignBrandResponse = await cmsRequest('/api/brands', {
+  method: 'POST',
+  service: true,
+  body: {
+    name: 'Authorization Test Brand',
+    slug: 'authorization-test-brand',
+    supportEmail: 'security-test@terrova.local',
+    active: true,
+  },
+})
+assert.equal(foreignBrandResponse.status, 201, 'Could not create authorization test brand')
+const foreignBrand = await foreignBrandResponse.json()
+
+const addressCreate = await cmsRequest('/api/addresses', {
+  method: 'POST',
+  token: customerToken,
+  body: {
+    customer: 'attacker-selected-customer',
+    brand: foreignBrand.doc.id,
+    label: 'Security test',
+    recipientName: 'Release Customer',
+    line1: '1 Integrity Lane',
+    city: 'Lisbon',
+    postalCode: '1000-001',
+    countryCode: 'PT',
+  },
+})
+assert.equal(addressCreate.status, 201, 'Customer address creation failed')
+const address = (await addressCreate.json()).doc
+assert.equal(String(relationshipID(address.customer)), String(customer.id))
+assert.equal(String(relationshipID(address.brand)), String(customerBrand))
+
+const addressUpdate = await cmsRequest(`/api/addresses/${address.id}`, {
+  method: 'PATCH',
+  token: customerToken,
+  body: { brand: foreignBrand.doc.id, customer: 'attacker-selected-customer', city: 'Porto' },
+})
+assert.equal(addressUpdate.status, 200, 'Customer address update failed')
+const updatedAddress = (await addressUpdate.json()).doc
+assert.equal(String(relationshipID(updatedAddress.customer)), String(customer.id))
+assert.equal(String(relationshipID(updatedAddress.brand)), String(customerBrand))
+
+const wineResponse = await cmsRequest('/api/wines?depth=0&limit=1', { service: true })
+const wine = (await wineResponse.json()).docs[0]
+assert.ok(wine, 'Seed wine is required for authorization checks')
+const foreignWineResponse = await cmsRequest('/api/wines', {
+  method: 'POST',
+  service: true,
+  body: {
+    brand: foreignBrand.doc.id,
+    name: 'Foreign Authorization Wine',
+    slug: 'foreign-authorization-wine',
+    status: 'live',
+    producer: relationshipID(wine.producer),
+    country: relationshipID(wine.country),
+    region: relationshipID(wine.region),
+  },
+})
+assert.equal(foreignWineResponse.status, 201, 'Could not create cross-brand test wine')
+const foreignWine = (await foreignWineResponse.json()).doc
+const skuResponse = await cmsRequest(
+  `/api/wine-skus?depth=0&limit=1&where[wine][equals]=${encodeURIComponent(String(wine.id))}`,
+  { service: true },
+)
+const sku = (await skuResponse.json()).docs[0]
+assert.ok(sku, 'Seed WineSKU is required for authorization checks')
+
+const ownOrderResponse = await cmsRequest('/api/orders', {
+  method: 'POST',
+  service: true,
+  body: {
+    code: 'ORD-AUTHORIZATION-OWNER',
+    brand: customerBrand,
+    customer: customer.id,
+    status: 'delivered',
+    totalAmount: 0,
+    currency: 'EUR',
+  },
+})
+const ownOrder = (await ownOrderResponse.json()).doc
+const ownCellarResponse = await cmsRequest('/api/cellar-entries', {
+  method: 'POST',
+  service: true,
+  body: {
+    customer: customer.id,
+    brand: customerBrand,
+    wine: wine.id,
+    wineSKU: sku.id,
+    order: ownOrder.id,
+    experiencedAt: new Date().toISOString(),
+  },
+})
+const ownCellar = (await ownCellarResponse.json()).doc
+
+const boxResponse = await cmsRequest('/api/boxes?depth=0&limit=1', { service: true })
+const box = (await boxResponse.json()).docs[0]
+assert.ok(box, 'Seed box is required for inventory lifecycle checks')
+const reservedSkuIDs = [...new Set(box.wineSKUs.map(relationshipID).map(String))]
+const stockBefore = new Map()
+for (const skuID of reservedSkuIDs) {
+  const response = await cmsRequest(`/api/wine-skus/${skuID}?depth=0`, { service: true })
+  const current = await response.json()
+  stockBefore.set(skuID, Number(current.stockReserved))
+}
+const reservationOrderResponse = await cmsRequest('/api/orders', {
+  method: 'POST',
+  service: true,
+  body: {
+    code: 'ORD-INVENTORY-RELEASE',
+    brand: customerBrand,
+    customer: customer.id,
+    box: box.id,
+    status: 'paid',
+    totalAmount: 4999,
+    currency: 'EUR',
+  },
+})
+const reservationOrder = (await reservationOrderResponse.json()).doc
+const preparingResponse = await cmsRequest(`/api/orders/${reservationOrder.id}`, {
+  method: 'PATCH',
+  service: true,
+  body: { status: 'preparing' },
+})
+assert.equal(preparingResponse.status, 200, 'Order could not enter preparation')
+for (const skuID of reservedSkuIDs) {
+  const response = await cmsRequest(`/api/wine-skus/${skuID}?depth=0`, { service: true })
+  const current = await response.json()
+  assert.ok(
+    Number(current.stockReserved) > stockBefore.get(skuID),
+    `Preparation did not reserve WineSKU ${skuID}`,
+  )
+}
+const cancelResponse = await cmsRequest(`/api/orders/${reservationOrder.id}`, {
+  method: 'PATCH',
+  service: true,
+  body: { status: 'cancelled' },
+})
+assert.equal(cancelResponse.status, 200, 'Prepared order could not be cancelled')
+for (const skuID of reservedSkuIDs) {
+  const response = await cmsRequest(`/api/wine-skus/${skuID}?depth=0`, { service: true })
+  const current = await response.json()
+  assert.equal(
+    Number(current.stockReserved),
+    stockBefore.get(skuID),
+    `Cancellation did not release WineSKU ${skuID}`,
+  )
+}
+const retryCancel = await cmsRequest(`/api/orders/${reservationOrder.id}`, {
+  method: 'PATCH',
+  service: true,
+  body: { status: 'cancelled' },
+})
+assert.equal(retryCancel.status, 200, 'Idempotent cancellation retry failed')
+const releaseMovementsResponse = await cmsRequest(
+  `/api/inventory-movements?depth=0&limit=100&where[order][equals]=${reservationOrder.id}&where[reason][equals]=release`,
+  { service: true },
+)
+const releaseMovements = (await releaseMovementsResponse.json()).docs
+assert.equal(
+  releaseMovements.length,
+  box.wineSKUs.length,
+  'Cancellation retry created duplicate release movements',
+)
+for (const skuID of reservedSkuIDs) {
+  const response = await cmsRequest(`/api/wine-skus/${skuID}?depth=0`, { service: true })
+  const current = await response.json()
+  assert.equal(
+    Number(current.stockReserved),
+    stockBefore.get(skuID),
+    `Cancellation retry changed WineSKU ${skuID} twice`,
+  )
+}
+
+const validRating = await cmsRequest('/api/ratings', {
+  method: 'POST',
+  token: customerToken,
+  body: {
+    customer: 'attacker-selected-customer',
+    brand: foreignBrand.doc.id,
+    wine: wine.id,
+    cellarEntry: ownCellar.id,
+    score: 4,
+  },
+})
+assert.equal(validRating.status, 201, 'Owned rating should be accepted')
+const rating = (await validRating.json()).doc
+assert.equal(String(relationshipID(rating.customer)), String(customer.id))
+assert.equal(String(relationshipID(rating.brand)), String(customerBrand))
+
+const foreignCustomerResponse = await cmsRequest('/api/customers', {
+  method: 'POST',
+  service: true,
+  body: {
+    brand: customerBrand,
+    email: 'foreign-owner@terrova.local',
+    password: 'foreign-release-password',
+    name: 'Foreign Owner',
+    status: 'active',
+    termsAcceptedAt: new Date().toISOString(),
+    _verified: true,
+  },
+})
+const foreignCustomer = (await foreignCustomerResponse.json()).doc
+const foreignOrderResponse = await cmsRequest('/api/orders', {
+  method: 'POST',
+  service: true,
+  body: {
+    code: 'ORD-AUTHORIZATION-FOREIGN',
+    brand: customerBrand,
+    customer: foreignCustomer.id,
+    status: 'delivered',
+    totalAmount: 0,
+    currency: 'EUR',
+  },
+})
+const foreignOrder = (await foreignOrderResponse.json()).doc
+const foreignCellarResponse = await cmsRequest('/api/cellar-entries', {
+  method: 'POST',
+  service: true,
+  body: {
+    customer: foreignCustomer.id,
+    brand: customerBrand,
+    wine: wine.id,
+    wineSKU: sku.id,
+    order: foreignOrder.id,
+    experiencedAt: new Date().toISOString(),
+  },
+})
+const foreignCellar = (await foreignCellarResponse.json()).doc
+
+const crossCustomerRating = await cmsRequest('/api/ratings', {
+  method: 'POST',
+  token: customerToken,
+  body: { wine: wine.id, cellarEntry: foreignCellar.id, score: 5 },
+})
+assert.ok(
+  [400, 403].includes(crossCustomerRating.status),
+  'Payload accepted a rating for another customer cellar entry',
+)
+
+const crossBrandRating = await cmsRequest('/api/ratings', {
+  method: 'POST',
+  token: customerToken,
+  body: { wine: wine.id, brand: foreignBrand.doc.id, score: 5 },
+})
+assert.equal(crossBrandRating.status, 201, 'Valid wine should remain rateable')
+const derivedCrossBrandRating = (await crossBrandRating.json()).doc
+assert.equal(String(relationshipID(derivedCrossBrandRating.brand)), String(customerBrand))
+
+const foreignWineRating = await cmsRequest('/api/ratings', {
+  method: 'POST',
+  token: customerToken,
+  body: { wine: foreignWine.id, brand: customerBrand, score: 5 },
+})
+assert.ok(
+  [400, 403].includes(foreignWineRating.status),
+  'Payload accepted a rating for a wine from another brand',
+)
+
 const adminResponse = await fetch(`${cmsURL}/admin`, { redirect: 'follow' })
 assert.equal(adminResponse.status, 200, 'Payload admin did not load')
 
-console.log('Functional smoke tests passed: public routes, scenes, CMS admin, and collections.')
+console.log(
+  'Functional smoke tests passed: public routes, scenes, CMS admin, collections, and direct Payload authorization.',
+)

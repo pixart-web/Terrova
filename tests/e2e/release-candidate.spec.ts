@@ -29,12 +29,37 @@ test('cinematic homepage preserves the seven-scene journey', async ({ page }) =>
   )
 })
 
-test('plan selection reaches the provider-neutral checkout confirmation', async ({ page }) => {
+test('subscription checkout requires auth, preserves the plan and associates the provider customer', async ({
+  page,
+  request,
+}) => {
   await page.goto('/boxes?plan=drinker')
   await expect(page.getByRole('heading', { name: 'Go further.' })).toBeVisible()
   await page.getByRole('button', { name: 'Begin with Drinker' }).click()
+  await expect(page).toHaveURL(/\/account\?checkout=required&returnTo=/)
+  await expect(page.getByText(/continue securely to checkout/i)).toBeVisible()
+  await page
+    .getByRole('heading', { name: 'Welcome back' })
+    .locator('..')
+    .getByLabel('Email')
+    .fill(process.env.SEED_TEST_CUSTOMER_EMAIL ?? 'release-test@terrova.local')
+  await page
+    .getByRole('heading', { name: 'Welcome back' })
+    .locator('..')
+    .getByLabel('Password')
+    .fill(process.env.SEED_TEST_CUSTOMER_PASSWORD ?? 'local-release-test-password')
+  await page.getByRole('button', { name: 'Enter My Terrova' }).click()
   await expect(page).toHaveURL(/\/checkout\/success\?session_id=cs_test_terrova_fixture/)
   await expect(page.getByRole('heading', { name: /Your journey has begun/i })).toBeVisible()
+
+  const cmsURL = process.env.TERROVA_CMS_URL ?? 'http://localhost:3001'
+  const customerResponse = await request.get(
+    `${cmsURL}/api/customers?depth=0&limit=1&where[email][equals]=${encodeURIComponent(process.env.SEED_TEST_CUSTOMER_EMAIL ?? 'release-test@terrova.local')}`,
+    { headers: { 'x-terrova-service-token': process.env.CMS_SERVICE_TOKEN ?? '' } },
+  )
+  expect(customerResponse.ok()).toBe(true)
+  const customerPayload = await customerResponse.json()
+  expect(customerPayload.docs[0].externalCustomerId).toBe('cus_test_terrova_fixture')
 })
 
 test('gift intent is persisted without pretending that billing is complete', async ({ page }) => {
@@ -65,6 +90,26 @@ test('authenticated customer can enter My Terrova', async ({ page }) => {
     page.getByRole('heading', { name: /Your next discovery starts here/i }),
   ).toBeVisible()
   await expect(page.getByText(/No deliveries yet|recorded/)).toBeVisible()
+})
+
+test('customer can rate only a bottle exposed by their cellar', async ({ page }) => {
+  await page.goto('/account')
+  await page
+    .getByRole('heading', { name: 'Welcome back' })
+    .locator('..')
+    .getByLabel('Email')
+    .fill(process.env.SEED_TEST_CUSTOMER_EMAIL ?? 'release-test@terrova.local')
+  await page
+    .getByRole('heading', { name: 'Welcome back' })
+    .locator('..')
+    .getByLabel('Password')
+    .fill(process.env.SEED_TEST_CUSTOMER_PASSWORD ?? 'local-release-test-password')
+  await page.getByRole('button', { name: 'Enter My Terrova' }).click()
+  const form = page.locator('.rating-form').first()
+  await expect(form).toBeVisible()
+  await form.getByLabel('Rating').selectOption('5')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(page).toHaveURL(/\/account\?rating=saved/)
 })
 
 test('legal and editorial routes have real, indexable shells', async ({ page }) => {

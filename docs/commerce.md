@@ -2,7 +2,7 @@
 
 ## Stripe
 
-`CommerceGateway` is the only billing port. The Stripe adapter creates customers, subscription checkout sessions, billing portal sessions and parses signed events. CMS Plans store environment-specific Stripe Price IDs. Never copy test IDs into production.
+`CommerceGateway` is the only billing port. The Stripe adapter creates customers, subscription checkout sessions, billing portal sessions and parses signed events. Subscription checkout requires an authenticated internal Customer and a persisted provider Customer reference; guest plan selection is carried through login/signup and resumes checkout afterwards. CMS Plans store environment-specific Stripe Price IDs. Never copy test IDs into production.
 
 Configure the webhook endpoint:
 
@@ -10,7 +10,7 @@ Configure the webhook endpoint:
 POST https://terrova.net/api/commerce/webhooks/stripe
 ```
 
-Required event families are `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` and `invoice.payment_failed`. Delivery must use HTTPS. The endpoint records each provider event ID before work, so retries are idempotent and failures remain auditable/retryable.
+Required event families are `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` and `invoice.payment_failed`. Delivery must use HTTPS. The endpoint records each provider event ID before work, so retries are idempotent and failures remain auditable/retryable. Subscription records retain the latest applied provider timestamp: older or same-second events cannot regress state, cancellation is terminal for a provider subscription, and invoice events never blindly reactivate it.
 
 The success URL communicates receipt only; Stripe webhooks establish billing truth. Customer cancellation/payment-method management stays in Stripe Portal.
 
@@ -20,7 +20,7 @@ The public flow records a validated Gift intent linked to a Plan and optional pu
 
 ## Email
 
-Payload authentication and web transactional messages use a Resend-compatible HTTP adapter. Without `RESEND_API_KEY`, development logs a non-PII delivery summary and production configuration is considered incomplete. Verify the sending domain and DKIM/SPF before launch.
+Payload authentication and web transactional messages use a Resend-compatible HTTP adapter. `RESEND_API_URL` is a base URL or full emails endpoint; both adapters normalize it to exactly `/emails`. Without `RESEND_API_KEY`, development logs a non-PII delivery summary and production configuration is considered incomplete. Verify the sending domain and DKIM/SPF before launch.
 
 ## Analytics
 

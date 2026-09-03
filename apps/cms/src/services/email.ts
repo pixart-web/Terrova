@@ -1,5 +1,7 @@
 import type { EmailAdapter, SendEmailOptions } from 'payload'
 
+import { resendEmailsEndpoint } from '@terrova/config'
+
 function recipientAddresses(value: SendEmailOptions['to']): string[] {
   const values = Array.isArray(value) ? value : value ? [value] : []
   return values.flatMap((recipient) => {
@@ -29,7 +31,7 @@ export function createEmailAdapter(): EmailAdapter<{ id: string }> {
         return { id: 'development-noop' }
       }
 
-      const response = await fetch(process.env.RESEND_API_URL ?? 'https://api.resend.com/emails', {
+      const response = await fetch(resendEmailsEndpoint(process.env.RESEND_API_URL), {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({

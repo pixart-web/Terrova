@@ -6,6 +6,26 @@ import { sendTransactionalEmail } from '../services/email'
 
 type Document = Record<string, unknown> & { id: EntityID }
 
+export type ProviderStateDecision = 'apply' | 'stale' | 'timestamp-only'
+
+export function providerStateDecision(input: {
+  lastProviderEventAt?: unknown
+  currentStatus?: unknown
+  providerEventAt: string
+  incomingStatus: string
+}): ProviderStateDecision {
+  const incoming = Date.parse(input.providerEventAt)
+  if (!Number.isFinite(incoming)) throw new Error('Provider event timestamp is invalid')
+  const previous = input.lastProviderEventAt
+    ? Date.parse(String(input.lastProviderEventAt))
+    : Number.NEGATIVE_INFINITY
+  if (Number.isFinite(previous) && incoming <= previous) return 'stale'
+  if (String(input.currentStatus) === 'cancelled' && input.incomingStatus !== 'cancelled') {
+    return 'timestamp-only'
+  }
+  return 'apply'
+}
+
 function relationID(value: unknown): EntityID | undefined {
   if (typeof value === 'string' || typeof value === 'number') return value
   if (value && typeof value === 'object' && 'id' in value) {
@@ -85,14 +105,37 @@ export class PayloadSubscriptionSyncTarget implements SubscriptionSyncTarget {
       ? await find('plans', 'externalPriceId', input.providerPriceId)
       : undefined
     if (!customer || !plan) throw new Error('Subscription cannot be mapped to customer and plan')
+    const customerBrand = relationID(customer.brand)
+    const planBrand = relationID(plan.brand)
+    if (!customerBrand || String(customerBrand) !== String(planBrand)) {
+      throw new Error('Subscription customer and plan brand do not match')
+    }
+    if (input.brandId && String(input.brandId) !== String(customerBrand)) {
+      throw new Error('Subscription event brand does not match customer')
+    }
     const existing = await find(
       'subscriptions',
       'providerSubscriptionId',
       input.providerSubscriptionId,
     )
+    const decision = providerStateDecision({
+      lastProviderEventAt: existing?.lastProviderEventAt,
+      currentStatus: existing?.status,
+      providerEventAt: input.providerEventAt,
+      incomingStatus: input.status,
+    })
+    if (decision === 'stale') return
+    if (decision === 'timestamp-only' && existing) {
+      await cmsRequest(`/api/subscriptions/${existing.id}`, {
+        service: true,
+        method: 'PATCH',
+        body: JSON.stringify({ lastProviderEventAt: input.providerEventAt }),
+      })
+      return
+    }
     const body = {
       code: existing?.code ?? `SUB-${input.providerSubscriptionId}`,
-      brand: input.brandId ?? relationID(customer.brand),
+      brand: customerBrand,
       customer: customer.id,
       plan: plan.id,
       status: input.status,
@@ -101,7 +144,7 @@ export class PayloadSubscriptionSyncTarget implements SubscriptionSyncTarget {
       cancelAtPeriodEnd: input.cancelAtPeriodEnd,
       providerSubscriptionId: input.providerSubscriptionId,
       providerCustomerId: input.providerCustomerId,
-      lastProviderEventAt: new Date().toISOString(),
+      lastProviderEventAt: input.providerEventAt,
     }
     await cmsRequest(existing ? `/api/subscriptions/${existing.id}` : '/api/subscriptions', {
       service: true,
@@ -125,11 +168,23 @@ export class PayloadSubscriptionSyncTarget implements SubscriptionSyncTarget {
       input.providerSubscriptionId,
     )
     if (!subscription) throw new Error('Invoice subscription has not been synchronized yet')
-    await cmsRequest(`/api/subscriptions/${subscription.id}`, {
-      service: true,
-      method: 'PATCH',
-      body: JSON.stringify({ status: input.paid ? 'active' : 'payment_issue' }),
+    const nextStatus = input.paid ? 'active' : 'payment_issue'
+    const decision = providerStateDecision({
+      lastProviderEventAt: subscription.lastProviderEventAt,
+      currentStatus: subscription.status,
+      providerEventAt: input.providerEventAt,
+      incomingStatus: nextStatus,
     })
+    if (decision !== 'stale') {
+      await cmsRequest(`/api/subscriptions/${subscription.id}`, {
+        service: true,
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: decision === 'apply' ? nextStatus : subscription.status,
+          lastProviderEventAt: input.providerEventAt,
+        }),
+      })
+    }
 
     if (input.paid && !(await find('orders', 'providerInvoiceId', input.providerInvoiceId))) {
       await cmsRequest('/api/orders', {
@@ -149,7 +204,7 @@ export class PayloadSubscriptionSyncTarget implements SubscriptionSyncTarget {
       })
     }
 
-    if (!input.paid) {
+    if (!input.paid && decision === 'apply') {
       const customerID = relationID(subscription.customer)
       if (customerID) {
         const customer = await cmsRequest<Document>(`/api/customers/${customerID}`, {
@@ -167,12 +222,20 @@ export class PayloadSubscriptionSyncTarget implements SubscriptionSyncTarget {
   }
 
   async attachCheckout(input: Parameters<SubscriptionSyncTarget['attachCheckout']>[0]) {
-    if (input.customerId && input.providerCustomerId) {
-      await cmsRequest(`/api/customers/${input.customerId}`, {
-        service: true,
-        method: 'PATCH',
-        body: JSON.stringify({ externalCustomerId: input.providerCustomerId }),
-      })
+    if (!input.customerId || !input.providerCustomerId) {
+      throw new Error('Checkout cannot be attached without customer references')
     }
+    const customer = await cmsRequest<Document>(`/api/customers/${input.customerId}?depth=0`, {
+      service: true,
+      cache: 'no-store',
+    })
+    if (input.brandId && String(relationID(customer.brand)) !== String(input.brandId)) {
+      throw new Error('Checkout customer and brand do not match')
+    }
+    await cmsRequest(`/api/customers/${input.customerId}`, {
+      service: true,
+      method: 'PATCH',
+      body: JSON.stringify({ externalCustomerId: input.providerCustomerId }),
+    })
   }
 }

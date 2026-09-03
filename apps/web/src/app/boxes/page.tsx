@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { BottleMark, PageHero, StructuredData } from '@/components/public/page-hero'
+import { CheckoutResume } from '@/components/checkout-resume'
 import { contentRepository, requestBrand } from '@/lib/content'
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default async function BoxesPage({
     contentRepository.listPublishedBoxes(brand.id),
   ])
   const requested = typeof query.plan === 'string' ? query.plan : undefined
+  const promo = typeof query.promo === 'string' ? query.promo.slice(0, 80) : undefined
   const selected =
     plans.find((plan) => plan.code === requested) ??
     plans.find((plan) => plan.mostPopular) ??
@@ -48,6 +50,7 @@ export default async function BoxesPage({
           Checkout is not configured for this environment yet. Your selection has been kept.
         </p>
       )}
+      {query.resume === '1' && selected && <CheckoutResume plan={selected.code} promo={promo} />}
 
       <section className="plan-ledger" aria-labelledby="plans-title">
         <div className="section-heading">

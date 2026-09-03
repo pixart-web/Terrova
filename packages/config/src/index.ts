@@ -32,3 +32,8 @@ export const defaultBrand = {
   currency: 'EUR',
   theme: terrovaTokens.color,
 } as const
+
+export function resendEmailsEndpoint(configured?: string): string {
+  const base = (configured?.trim() || 'https://api.resend.com').replace(/\/+$/, '')
+  return base.endsWith('/emails') ? base : `${base}/emails`
+}

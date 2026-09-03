@@ -1,7 +1,9 @@
 import type { CheckoutIntent, CommerceGateway, ProviderSubscriptionState } from './index'
+import { assertSubscriptionCustomerAssociation } from './index'
 
 export class TestCommerceGateway implements CommerceGateway {
   async createCheckout(intent: CheckoutIntent) {
+    assertSubscriptionCustomerAssociation(intent)
     const url = new URL(intent.successUrl)
     url.searchParams.set('session_id', 'cs_test_terrova_fixture')
     return { id: 'cs_test_terrova_fixture', redirectUrl: url.toString(), provider: 'test' as const }

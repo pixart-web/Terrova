@@ -3,7 +3,11 @@ import { NextResponse } from 'next/server'
 import { CommerceNotConfiguredError } from '@terrova/commerce'
 import type { EntityID } from '@terrova/types'
 
-import { getCurrentCustomer } from '@/lib/auth/session'
+import {
+  getCurrentCustomer,
+  PENDING_CHECKOUT_COOKIE,
+  pendingCheckoutCookieOptions,
+} from '@/lib/auth/session'
 import { cmsRequest, type PayloadList } from '@/lib/cms'
 import { commerceGateway } from '@/lib/commerce/gateway'
 import { contentRepository, requestBrand } from '@/lib/content'
@@ -33,19 +37,35 @@ export async function POST(request: Request) {
     const data = await requestData(request)
     const planCode = cleanText(data.plan, 40).toLowerCase()
     if (!/^[a-z0-9-]+$/.test(planCode)) throw new Error('Invalid plan code')
+    const promo = cleanText(data.promo, 80)
     const [{ brand }, customer] = await Promise.all([requestBrand(), getCurrentCustomer()])
+    if (!customer) {
+      const resume = new URLSearchParams({ plan: planCode, resume: '1' })
+      if (promo) resume.set('promo', promo)
+      const account = new URL('/account', request.url)
+      account.searchParams.set('checkout', 'required')
+      account.searchParams.set('returnTo', `/boxes?${resume.toString()}`)
+      const response = NextResponse.redirect(account, 303)
+      response.cookies.set(
+        PENDING_CHECKOUT_COOKIE,
+        encodeURIComponent(`/boxes?${resume.toString()}`),
+        pendingCheckoutCookieOptions(),
+      )
+      return response
+    }
+    if (String(customer.brandId) !== String(brand.id)) {
+      throw new Error('Customer and checkout brand do not match')
+    }
     const plan = await contentRepository.getPlan(brand.id, planCode)
     if (!plan?.externalPriceId) throw new CommerceNotConfiguredError()
 
     const gateway = commerceGateway()
-    const customerRecord = customer
-      ? await cmsRequest<Document>(`/api/customers/${customer.id}?depth=0`, {
-          service: true,
-          cache: 'no-store',
-        })
-      : undefined
+    const customerRecord = await cmsRequest<Document>(`/api/customers/${customer.id}?depth=0`, {
+      service: true,
+      cache: 'no-store',
+    })
     let providerCustomerId = String(customerRecord?.externalCustomerId ?? '') || undefined
-    if (customer && !providerCustomerId) {
+    if (!providerCustomerId) {
       const provider = await gateway.createCustomer({
         email: customer.email,
         name: customer.name,
@@ -62,8 +82,8 @@ export async function POST(request: Request) {
     const siteURL = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin
     const session = await gateway.createCheckout({
       brandId: brand.id,
-      customerId: customer?.id,
-      customerEmail: customer?.email,
+      customerId: customer.id,
+      customerEmail: customer.email,
       providerCustomerId,
       lines: [
         {
@@ -78,7 +98,7 @@ export async function POST(request: Request) {
         `/checkout/cancelled?plan=${encodeURIComponent(plan.code)}`,
         siteURL,
       ).toString(),
-      promotionCode: await promotionReference(cleanText(data.promo, 80), brand.id),
+      promotionCode: await promotionReference(promo, brand.id),
       metadata: { planCode: plan.code, brandSlug: brand.slug },
     })
     if (analyticsConsent(request)) {

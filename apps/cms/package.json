@@ -17,6 +17,7 @@
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
+    "@terrova/config": "workspace:*",
     "@payloadcms/db-postgres": "3.88.0",
     "@payloadcms/next": "3.88.0",
     "@payloadcms/richtext-lexical": "3.88.0",

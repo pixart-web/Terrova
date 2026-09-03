@@ -2,6 +2,29 @@ import type { CollectionConfig } from 'payload'
 
 import { adminOnly, isAdminOrService, ownCustomerRecord, ownCustomerRelation } from './access'
 
+function relationshipID(value: unknown): string | number | undefined {
+  if (typeof value === 'string' || typeof value === 'number') return value
+  if (value && typeof value === 'object' && 'id' in value) {
+    const id = (value as { id?: unknown }).id
+    if (typeof id === 'string' || typeof id === 'number') return id
+  }
+  return undefined
+}
+
+async function authenticatedCustomerBrand(req: Parameters<typeof isAdminOrService>[0]) {
+  if (req.user?.collection !== 'customers') return undefined
+  const embedded = relationshipID((req.user as unknown as { brand?: unknown }).brand)
+  if (embedded) return embedded
+  const customer = await req.payload.findByID({
+    collection: 'customers',
+    id: req.user.id,
+    depth: 0,
+    req,
+    overrideAccess: true,
+  })
+  return relationshipID(customer.brand)
+}
+
 export const Customers: CollectionConfig = {
   slug: 'customers',
   auth: {
@@ -84,8 +107,12 @@ export const Addresses: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data, req }) => {
-        if (req.user?.collection === 'customers') return { ...data, customer: req.user.id }
+      async ({ data, req }) => {
+        if (req.user?.collection === 'customers') {
+          const brand = await authenticatedCustomerBrand(req)
+          if (!brand) throw new Error('Customer brand could not be resolved')
+          return { ...data, customer: req.user.id, brand }
+        }
         return data
       },
     ],
@@ -97,8 +124,22 @@ export const Addresses: CollectionConfig = {
       relationTo: 'customers',
       required: true,
       index: true,
+      access: {
+        create: ({ req }) => isAdminOrService(req),
+        update: ({ req }) => isAdminOrService(req),
+      },
     },
-    { name: 'brand', type: 'relationship', relationTo: 'brands', required: true, index: true },
+    {
+      name: 'brand',
+      type: 'relationship',
+      relationTo: 'brands',
+      required: true,
+      index: true,
+      access: {
+        create: ({ req }) => isAdminOrService(req),
+        update: ({ req }) => isAdminOrService(req),
+      },
+    },
     { name: 'label', type: 'text', required: true, defaultValue: 'Home' },
     { name: 'recipientName', type: 'text', required: true },
     { name: 'line1', type: 'text', required: true },

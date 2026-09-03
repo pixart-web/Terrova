@@ -5,8 +5,59 @@ import { adminOnly, isAdminOrService, ownCustomerRelation } from './access'
 const customerCreate: Access = ({ req }) =>
   isAdminOrService(req) || req.user?.collection === 'customers'
 
-const enforceCustomer: CollectionBeforeChangeHook = ({ data, req }) =>
-  req.user?.collection === 'customers' ? { ...data, customer: req.user.id } : data
+function relationshipID(value: unknown): string | number | undefined {
+  if (typeof value === 'string' || typeof value === 'number') return value
+  if (value && typeof value === 'object' && 'id' in value) {
+    const id = (value as { id?: unknown }).id
+    if (typeof id === 'string' || typeof id === 'number') return id
+  }
+  return undefined
+}
+
+const enforceRatingOwnership: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
+  if (req.user?.collection !== 'customers') return data
+  const customer = await req.payload.findByID({
+    collection: 'customers',
+    id: req.user.id,
+    depth: 0,
+    req,
+    overrideAccess: true,
+  })
+  const brand = relationshipID(customer.brand)
+  const wineID = relationshipID(data.wine ?? originalDoc?.wine)
+  const cellarEntryID = relationshipID(data.cellarEntry ?? originalDoc?.cellarEntry)
+  if (!brand || !wineID) throw new Error('Rating customer brand and wine are required')
+
+  const wine = await req.payload.findByID({
+    collection: 'wines',
+    id: wineID,
+    depth: 0,
+    req,
+    overrideAccess: true,
+  })
+  if (String(relationshipID(wine.brand)) !== String(brand)) {
+    throw new Error('Wine does not belong to the customer brand')
+  }
+
+  if (cellarEntryID) {
+    const cellarEntry = await req.payload.findByID({
+      collection: 'cellar-entries',
+      id: cellarEntryID,
+      depth: 0,
+      req,
+      overrideAccess: true,
+    })
+    if (
+      String(relationshipID(cellarEntry.customer)) !== String(req.user.id) ||
+      String(relationshipID(cellarEntry.brand)) !== String(brand) ||
+      String(relationshipID(cellarEntry.wine)) !== String(wineID)
+    ) {
+      throw new Error('Cellar entry does not belong to this customer, brand and wine')
+    }
+  }
+
+  return { ...data, customer: req.user.id, brand, wine: wineID, cellarEntry: cellarEntryID }
+}
 
 export const CellarEntries: CollectionConfig = {
   slug: 'cellar-entries',
@@ -37,7 +88,7 @@ export const Ratings: CollectionConfig = {
     update: ownCustomerRelation,
     delete: ownCustomerRelation,
   },
-  hooks: { beforeChange: [enforceCustomer] },
+  hooks: { beforeChange: [enforceRatingOwnership] },
   fields: [
     {
       name: 'customer',
@@ -45,8 +96,22 @@ export const Ratings: CollectionConfig = {
       relationTo: 'customers',
       required: true,
       index: true,
+      access: {
+        create: ({ req }) => isAdminOrService(req),
+        update: ({ req }) => isAdminOrService(req),
+      },
     },
-    { name: 'brand', type: 'relationship', relationTo: 'brands', required: true, index: true },
+    {
+      name: 'brand',
+      type: 'relationship',
+      relationTo: 'brands',
+      required: true,
+      index: true,
+      access: {
+        create: ({ req }) => isAdminOrService(req),
+        update: ({ req }) => isAdminOrService(req),
+      },
+    },
     { name: 'wine', type: 'relationship', relationTo: 'wines', required: true, index: true },
     { name: 'cellarEntry', type: 'relationship', relationTo: 'cellar-entries', index: true },
     { name: 'score', type: 'number', required: true, min: 1, max: 5 },

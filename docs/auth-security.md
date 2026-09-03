@@ -4,7 +4,7 @@
 
 Signup validates name, email, a 12–128 character password, terms/age confirmation and optional marketing consent. Payload sends a branded verification link to the web. Login returns a short-lived JWT stored only in an HttpOnly cookie. Forgot/reset responses avoid account enumeration. Logout expires the cookie.
 
-My Terrova reads Subscriptions, Orders, Addresses, Cellar, Ratings and TasteSignals through row-level Payload access filters. Address and rating mutations re-check ownership server-side. Customer-controlled fields cannot change brand, status or provider customer reference.
+My Terrova reads Subscriptions, Orders, Addresses, Cellar, Ratings and TasteSignals through row-level Payload access filters. Direct Payload API address and rating mutations derive Customer and brand from the authenticated Customer. Rating hooks validate Wine brand and CellarEntry customer/brand/wine ownership. Customer-controlled fields cannot change brand, status or provider customer reference.
 
 ## Request controls
 

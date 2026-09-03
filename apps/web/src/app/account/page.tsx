@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { getCurrentCustomer, sessionToken } from '@/lib/auth/session'
+import { getCurrentCustomer, pendingCheckoutPath, sessionToken } from '@/lib/auth/session'
 import { loadAccountData } from '@/lib/account'
+import { safeInternalPath } from '@/lib/security'
 
 export const metadata: Metadata = { title: 'My Terrova', robots: { index: false, follow: false } }
 
@@ -23,6 +24,7 @@ export default async function AccountPage({
 }) {
   const customer = await getCurrentCustomer()
   const query = await searchParams
+  const returnTo = safeInternalPath(query.returnTo ?? (await pendingCheckoutPath()))
 
   if (!customer) {
     return (
@@ -41,6 +43,9 @@ export default async function AccountPage({
           {query.created && (
             <p role="status">Account created. Check your email to verify it before signing in.</p>
           )}
+          {query.checkout === 'required' && (
+            <p role="status">Sign in or create your cellar to continue securely to checkout.</p>
+          )}
           {query.reset && <p role="status">Password updated. You can now sign in.</p>}
           {query.error && (
             <p role="alert">
@@ -51,6 +56,7 @@ export default async function AccountPage({
         <div className="account-entry__forms">
           <form action="/api/auth/login" method="post" className="editorial-form">
             <h2>Welcome back</h2>
+            <input type="hidden" name="returnTo" value={returnTo} />
             <label>
               Email
               <input name="email" type="email" autoComplete="email" required />
@@ -70,6 +76,7 @@ export default async function AccountPage({
           </form>
           <form action="/api/auth/signup" method="post" className="editorial-form">
             <h2>Begin a cellar</h2>
+            <input type="hidden" name="returnTo" value={returnTo} />
             <label>
               Name
               <input name="name" autoComplete="name" required />

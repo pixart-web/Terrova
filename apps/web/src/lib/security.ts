@@ -26,6 +26,19 @@ export function cleanText(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
+export function safeInternalPath(value: unknown, fallback = '/account'): string {
+  const path = cleanText(value, 500)
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return fallback
+  try {
+    const parsed = new URL(path, 'https://terrova.invalid')
+    return parsed.origin === 'https://terrova.invalid'
+      ? `${parsed.pathname}${parsed.search}`
+      : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export function validEmail(value: unknown): string {
   const email = cleanText(value, 320).toLowerCase()
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('A valid email is required')

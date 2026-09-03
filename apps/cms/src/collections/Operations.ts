@@ -16,6 +16,28 @@ export function canTransitionOrder(from: string, to: string) {
   return from === to || Boolean(orderTransitions[from]?.includes(to))
 }
 
+export function shouldReleaseOrderReservations(from: string, to: string) {
+  return from === 'preparing' && (to === 'cancelled' || to === 'refunded')
+}
+
+export function reservationReleaseReference(orderID: unknown, skuID: unknown, index: number) {
+  return `RELEASE-${String(orderID)}-${String(skuID)}-${index}`
+}
+
+export function inventoryBalances(
+  stockOnHand: number,
+  stockReserved: number,
+  quantityDelta: number,
+  reservedDelta: number,
+) {
+  const next = stockOnHand + quantityDelta
+  const nextReserved = stockReserved + reservedDelta
+  if (next < nextReserved || next < 0 || nextReserved < 0) {
+    throw new Error('Inventory movement would make sellable stock negative')
+  }
+  return { next, nextReserved }
+}
+
 export const Subscriptions: CollectionConfig = {
   slug: 'subscriptions',
   admin: { useAsTitle: 'code', group: 'Commerce' },
@@ -172,6 +194,50 @@ export const Orders: CollectionConfig = {
           }
         }
 
+        if (shouldReleaseOrderReservations(String(previousDoc?.status), String(doc.status))) {
+          const items = await req.payload.find({
+            collection: 'order-items',
+            where: { order: { equals: orderID } },
+            limit: 100,
+            depth: 0,
+            req,
+          })
+          for (const [index, item] of items.docs.entries()) {
+            const skuID = relationshipID(item.wineSKU)
+            if (!skuID) continue
+            const reference = reservationReleaseReference(orderID, skuID, index)
+            const existingRelease = await req.payload.find({
+              collection: 'inventory-movements',
+              where: { reference: { equals: reference } },
+              limit: 1,
+              depth: 0,
+              req,
+            })
+            if (existingRelease.totalDocs > 0) continue
+            const sku = await req.payload.findByID({
+              collection: 'wine-skus',
+              id: skuID,
+              depth: 0,
+              req,
+            })
+            await req.payload.create({
+              collection: 'inventory-movements',
+              req,
+              data: {
+                reference,
+                brand: doc.brand,
+                sku: skuID,
+                order: orderID,
+                reason: 'release',
+                quantityDelta: 0,
+                reservedDelta: -Number(item.quantity),
+                balanceAfter: sku.stockOnHand,
+                reservedBalanceAfter: sku.stockReserved,
+              },
+            })
+          }
+        }
+
         if (doc.status === 'delivered') {
           const items = await req.payload.find({
             collection: 'order-items',
@@ -295,11 +361,12 @@ export const InventoryMovements: CollectionConfig = {
           depth: 0,
           req,
         })
-        const next = Number(sku.stockOnHand ?? 0) + Number(data.quantityDelta ?? 0)
-        const nextReserved = Number(sku.stockReserved ?? 0) + Number(data.reservedDelta ?? 0)
-        if (next < nextReserved || next < 0 || nextReserved < 0) {
-          throw new Error('Inventory movement would make sellable stock negative')
-        }
+        const { next, nextReserved } = inventoryBalances(
+          Number(sku.stockOnHand ?? 0),
+          Number(sku.stockReserved ?? 0),
+          Number(data.quantityDelta ?? 0),
+          Number(data.reservedDelta ?? 0),
+        )
         return { ...data, brand: sku.brand, balanceAfter: next, reservedBalanceAfter: nextReserved }
       },
     ],

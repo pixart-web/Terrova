@@ -6,7 +6,11 @@ import type {
   CommerceGateway,
   ProviderSubscriptionState,
 } from './index'
-import { CommerceNotConfiguredError, mapProviderSubscriptionStatus } from './index'
+import {
+  assertSubscriptionCustomerAssociation,
+  CommerceNotConfiguredError,
+  mapProviderSubscriptionStatus,
+} from './index'
 
 function timestamp(value?: number | null): string | undefined {
   return value ? new Date(value * 1000).toISOString() : undefined
@@ -25,6 +29,7 @@ export class StripeCommerceGateway implements CommerceGateway {
   }
 
   async createCheckout(intent: CheckoutIntent) {
+    assertSubscriptionCustomerAssociation(intent)
     const subscription = intent.lines.some((line) => line.kind === 'subscription')
     if (subscription && intent.lines.some((line) => line.kind !== 'subscription')) {
       throw new Error('Subscription checkout cannot mix one-time items')

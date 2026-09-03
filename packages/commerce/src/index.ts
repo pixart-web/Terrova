@@ -89,6 +89,8 @@ export interface SubscriptionSyncTarget {
     cancelAtPeriodEnd: boolean
     customerId?: EntityID
     brandId?: EntityID
+    providerEventAt: ISODate
+    providerEventId: string
   }): Promise<void>
   recordInvoice(input: {
     providerInvoiceId: string
@@ -96,6 +98,8 @@ export interface SubscriptionSyncTarget {
     amountPaid: number
     currency: Currency
     paid: boolean
+    providerEventAt: ISODate
+    providerEventId: string
   }): Promise<void>
   attachCheckout(input: {
     providerCheckoutId: string
@@ -127,6 +131,13 @@ export function assertSafeReturnUrl(url: string, allowedOrigin: string): string 
   const parsed = new URL(url, allowedOrigin)
   if (parsed.origin !== new URL(allowedOrigin).origin) throw new Error('Unsafe return URL')
   return parsed.toString()
+}
+
+export function assertSubscriptionCustomerAssociation(intent: CheckoutIntent): void {
+  if (!intent.lines.some((line) => line.kind === 'subscription')) return
+  if (!intent.customerId || !intent.providerCustomerId) {
+    throw new Error('Subscription checkout requires an associated customer')
+  }
 }
 
 export { StripeCommerceGateway, parseStripeEvent } from './stripe-adapter'
