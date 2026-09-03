@@ -4,8 +4,11 @@ import { useEffect, useRef } from 'react'
 
 export function CheckoutResume({ plan, promo }: { plan: string; promo?: string }) {
   const form = useRef<HTMLFormElement>(null)
+  const submitted = useRef(false)
 
   useEffect(() => {
+    if (submitted.current) return
+    submitted.current = true
     form.current?.requestSubmit()
   }, [])
 

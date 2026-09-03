@@ -11,10 +11,12 @@ const customerCreate: Access = ({ req }) =>
   isAdminOrService(req) || req.user?.collection === 'customers'
 
 function relationshipID(value: unknown): string | number | undefined {
-  if (typeof value === 'string' || typeof value === 'number') return value
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') return /^\d+$/.test(value) ? Number(value) : value
   if (value && typeof value === 'object' && 'id' in value) {
     const id = (value as { id?: unknown }).id
-    if (typeof id === 'string' || typeof id === 'number') return id
+    if (typeof id === 'number') return id
+    if (typeof id === 'string') return /^\d+$/.test(id) ? Number(id) : id
   }
   return undefined
 }

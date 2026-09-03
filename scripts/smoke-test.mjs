@@ -535,12 +535,12 @@ assert.ok(
   'Payload accepted a rating for another customer cellar entry',
 )
 
-const crossBrandRating = await cmsRequest('/api/ratings', {
-  method: 'POST',
+const crossBrandRating = await cmsRequest(`/api/ratings/${rating.id}`, {
+  method: 'PATCH',
   token: customerToken,
   body: { wine: wine.id, brand: foreignBrand.doc.id, score: 5 },
 })
-assert.equal(crossBrandRating.status, 201, 'Valid wine should remain rateable')
+assert.equal(crossBrandRating.status, 200, 'Customer could not update their own rating')
 const derivedCrossBrandRating = (await crossBrandRating.json()).doc
 assert.equal(String(relationshipID(derivedCrossBrandRating.brand)), String(customerBrand))
 
