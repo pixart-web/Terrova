@@ -4,7 +4,19 @@ const webURL = process.env.TERROVA_WEB_URL ?? 'http://127.0.0.1:3000'
 const cmsURL = process.env.TERROVA_CMS_URL ?? 'http://127.0.0.1:3001'
 const timeoutMs = Number(process.env.TERROVA_SMOKE_TIMEOUT_MS ?? 120_000)
 
-const publicRoutes = ['/', '/boxes', '/producers', '/journal', '/gifts', '/account']
+const publicRoutes = [
+  '/',
+  '/boxes',
+  '/producers',
+  '/producers/quinta-da-pellada',
+  '/wines/primus-branco',
+  '/journal',
+  '/journal/reading-a-landscape',
+  '/gifts',
+  '/account',
+  '/legal/privacy',
+  '/legal/terms',
+]
 const publicCollections = [
   'brands',
   'plans',
@@ -16,7 +28,26 @@ const publicCollections = [
   'grapes',
   'editions',
   'boxes',
+  'journal-posts',
+  'pages',
+  'site-settings',
   'media',
+]
+
+const privateCollections = [
+  'users',
+  'customers',
+  'addresses',
+  'subscriptions',
+  'orders',
+  'order-items',
+  'inventory-movements',
+  'cellar-entries',
+  'ratings',
+  'taste-signals',
+  'gifts',
+  'promotions',
+  'webhook-events',
 ]
 
 async function waitFor(url, label) {
@@ -209,11 +240,18 @@ for (const collection of publicCollections) {
   assert.ok(Array.isArray(payload.docs), `Invalid Payload response for ${collection}`)
 }
 
-const usersResponse = await fetch(`${cmsURL}/api/users?limit=1`)
-assert.ok(
-  [401, 403].includes(usersResponse.status),
-  `Users collection must require authentication; received ${usersResponse.status}`,
-)
+for (const collection of privateCollections) {
+  const response = await fetch(`${cmsURL}/api/${collection}?limit=1`)
+  if (response.ok) {
+    const payload = await response.json()
+    assert.equal(payload.docs?.length, 0, `Private collection leaked records: ${collection}`)
+  } else {
+    assert.ok(
+      [401, 403].includes(response.status),
+      `Unexpected private collection status for ${collection}: ${response.status}`,
+    )
+  }
+}
 
 const adminResponse = await fetch(`${cmsURL}/admin`, { redirect: 'follow' })
 assert.equal(adminResponse.status, 200, 'Payload admin did not load')
