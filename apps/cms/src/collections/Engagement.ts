@@ -1,4 +1,9 @@
-import type { Access, CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+import {
+  APIError,
+  type Access,
+  type CollectionBeforeChangeHook,
+  type CollectionConfig,
+} from 'payload'
 
 import { adminOnly, isAdminOrService, ownCustomerRelation } from './access'
 
@@ -26,7 +31,9 @@ const enforceRatingOwnership: CollectionBeforeChangeHook = async ({ data, origin
   const brand = relationshipID(customer.brand)
   const wineID = relationshipID(data.wine ?? originalDoc?.wine)
   const cellarEntryID = relationshipID(data.cellarEntry ?? originalDoc?.cellarEntry)
-  if (!brand || !wineID) throw new Error('Rating customer brand and wine are required')
+  if (!brand || !wineID) {
+    throw new APIError('Rating customer brand and wine are required', 400, null, true)
+  }
 
   const wine = await req.payload.findByID({
     collection: 'wines',
@@ -36,7 +43,7 @@ const enforceRatingOwnership: CollectionBeforeChangeHook = async ({ data, origin
     overrideAccess: true,
   })
   if (String(relationshipID(wine.brand)) !== String(brand)) {
-    throw new Error('Wine does not belong to the customer brand')
+    throw new APIError('Wine does not belong to the customer brand', 403, null, true)
   }
 
   if (cellarEntryID) {
@@ -52,7 +59,12 @@ const enforceRatingOwnership: CollectionBeforeChangeHook = async ({ data, origin
       String(relationshipID(cellarEntry.brand)) !== String(brand) ||
       String(relationshipID(cellarEntry.wine)) !== String(wineID)
     ) {
-      throw new Error('Cellar entry does not belong to this customer, brand and wine')
+      throw new APIError(
+        'Cellar entry does not belong to this customer, brand and wine',
+        403,
+        null,
+        true,
+      )
     }
   }
 

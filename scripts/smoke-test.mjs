@@ -365,6 +365,7 @@ const ownOrderResponse = await cmsRequest('/api/orders', {
     currency: 'EUR',
   },
 })
+assert.equal(ownOrderResponse.status, 201, 'Could not create owner authorization test order')
 const ownOrder = (await ownOrderResponse.json()).doc
 const ownCellarResponse = await cmsRequest('/api/cellar-entries', {
   method: 'POST',
@@ -378,6 +379,7 @@ const ownCellarResponse = await cmsRequest('/api/cellar-entries', {
     experiencedAt: new Date().toISOString(),
   },
 })
+assert.equal(ownCellarResponse.status, 201, 'Could not create owner authorization cellar entry')
 const ownCellar = (await ownCellarResponse.json()).doc
 
 const boxResponse = await cmsRequest('/api/boxes?depth=0&limit=1', { service: true })
@@ -488,6 +490,7 @@ const foreignCustomerResponse = await cmsRequest('/api/customers', {
     _verified: true,
   },
 })
+assert.equal(foreignCustomerResponse.status, 201, 'Could not create foreign authorization customer')
 const foreignCustomer = (await foreignCustomerResponse.json()).doc
 const foreignOrderResponse = await cmsRequest('/api/orders', {
   method: 'POST',
@@ -501,6 +504,7 @@ const foreignOrderResponse = await cmsRequest('/api/orders', {
     currency: 'EUR',
   },
 })
+assert.equal(foreignOrderResponse.status, 201, 'Could not create foreign authorization order')
 const foreignOrder = (await foreignOrderResponse.json()).doc
 const foreignCellarResponse = await cmsRequest('/api/cellar-entries', {
   method: 'POST',
@@ -514,6 +518,11 @@ const foreignCellarResponse = await cmsRequest('/api/cellar-entries', {
     experiencedAt: new Date().toISOString(),
   },
 })
+assert.equal(
+  foreignCellarResponse.status,
+  201,
+  'Could not create foreign authorization cellar entry',
+)
 const foreignCellar = (await foreignCellarResponse.json()).doc
 
 const crossCustomerRating = await cmsRequest('/api/ratings', {

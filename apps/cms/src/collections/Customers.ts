@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig } from 'payload'
 
 import { adminOnly, isAdminOrService, ownCustomerRecord, ownCustomerRelation } from './access'
 
@@ -110,7 +110,9 @@ export const Addresses: CollectionConfig = {
       async ({ data, req }) => {
         if (req.user?.collection === 'customers') {
           const brand = await authenticatedCustomerBrand(req)
-          if (!brand) throw new Error('Customer brand could not be resolved')
+          if (!brand) {
+            throw new APIError('Customer brand could not be resolved', 403, null, true)
+          }
           return { ...data, customer: req.user.id, brand }
         }
         return data
