@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 const navigation = [
   ['Boxes', '/boxes'],
@@ -9,8 +12,9 @@ const navigation = [
 ] as const
 
 export function SiteHeader() {
+  const pathname = usePathname()
   return (
-    <header className="site-header">
+    <header className="site-header" data-surface={pathname === '/' ? 'cinematic' : 'light'}>
       <Link className="wordmark" href="/" aria-label="Terrova home">
         Terrova
       </Link>

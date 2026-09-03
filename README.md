@@ -1,12 +1,12 @@
 # Terrova
 
-Premium, cinematic, multi-brand wine subscription platform. The repository is a pnpm monorepo with a public Next.js experience, a separate Payload CMS studio, shared domain packages, and local PostgreSQL.
+Production-candidate foundation for a premium, cinematic, multi-brand wine membership. The pnpm monorepo contains a Next.js storefront, a separate Payload Studio, PostgreSQL persistence and provider-neutral commerce, content, email and analytics boundaries.
 
 ## Prerequisites
 
-- Node.js 22.13 or newer
-- pnpm 11
-- Docker Desktop with the WSL 2 backend
+- Node.js 22.13+ (CI and containers use Node 24)
+- pnpm 11.19
+- Docker Desktop with WSL2, or any PostgreSQL 17 instance
 
 ## Local setup
 
@@ -14,60 +14,44 @@ Premium, cinematic, multi-brand wine subscription platform. The repository is a 
 pnpm install
 pnpm env:setup
 pnpm db:up
+pnpm cms:migrate
+pnpm cms:seed
 pnpm dev
 ```
 
-Open:
+Open the storefront at `http://localhost:3000` and Payload Studio at `http://localhost:3001/admin`. Create the first administrative `Users` account in Studio. Customer accounts are a separate authenticated collection and never grant Studio access.
 
-- Web experience: http://localhost:3000
-- Payload admin: http://localhost:3001/admin
+The seed is repeatable, preserves existing records and refuses production unless `ALLOW_PRODUCTION_SEED=true` is explicitly set. Development may use Payload schema push; staging and production must run committed migrations.
 
-`pnpm env:setup` creates local environment files from the committed examples without overwriting existing files. The checked-in development defaults also allow a first boot without this step, but explicit local files make configuration visible and easy to change.
-
-On the first admin visit, create the initial Payload user. In development, Payload pushes the code-first collection schema to the local PostgreSQL database automatically. Replace every example secret before using a shared or production environment.
-
-## Commands
+## Quality gates
 
 ```bash
-pnpm dev                 # web + CMS
-pnpm dev:web             # frontend only
-pnpm dev:cms             # Payload only
-pnpm build               # production builds
-pnpm check               # format, lint, typecheck, and build
-pnpm lint                # ESLint across apps
-pnpm typecheck           # TypeScript across apps
-pnpm format:check        # Prettier verification
-pnpm test:functional     # smoke test running web/CMS routes and collection access
-pnpm cms:generate:types  # regenerate Payload types
-pnpm cms:generate:schema # regenerate the PostgreSQL schema snapshot
-pnpm cms:migrate:create  # create a production database migration
-pnpm db:down             # stop local PostgreSQL
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test:unit
+pnpm build
+pnpm test:functional  # applications must be running
+pnpm test:e2e         # applications and Chromium must be available
 ```
 
-## Functional verification
-
-With PostgreSQL and both applications running, execute the dependency-free smoke suite in a second terminal:
-
-```bash
-pnpm test:functional
-```
-
-It verifies every public route, the seven homepage scene boundaries, Payload admin availability, all public foundation collections, and authentication on the Users collection. Pull requests run the same suite in GitHub Actions after format, lint, typecheck, and production builds pass.
+`pnpm check` runs formatting, lint, typecheck and both production builds. CI adds PostgreSQL migration/seed, unit tests, functional smoke tests and desktop/mobile Playwright flows.
 
 ## Repository map
 
 ```text
-apps/
-  web/       Next.js App Router storefront and cinematic scene system
-  cms/       Payload admin, REST API, collections and migrations
-packages/
-  ui/        reusable presentation primitives and tokens
-  config/    brand registry defaults and design tokens
-  types/     shared domain contracts
-  commerce/  payment-provider boundaries; no Stripe implementation yet
-  content/   CMS-facing repository boundaries
-docs/
-  architecture.md
+apps/web       public Next.js experience, account and server-side application routes
+apps/cms       Payload Studio/API, collections, migrations, seed and storage/email adapters
+packages/ui    design tokens and shared presentation primitives
+packages/types shared domain contracts
+packages/content CMS repository and taste aggregation
+packages/commerce Stripe and deterministic test adapters behind CommerceGateway
+packages/config multi-brand defaults
+docs            architecture, runbooks, testing and launch checklist
 ```
 
-Read [docs/architecture.md](docs/architecture.md) before adding new product domains or integrating Stripe.
+Start with [architecture](docs/architecture.md), then use [deployment](docs/deployment.md) and the [launch checklist](docs/launch-checklist.md) for a release. The production environment contract is in `.env.production.example`; real values belong in a secret manager, never Git.
+
+## Current release boundary
+
+The release candidate includes CMS-driven catalogue/editorial pages, customer authentication, My Terrova, Stripe Checkout/Portal/webhook synchronization, fulfilment inventory, Cellar ratings and transparent taste signals. Gift intent is persisted but intentionally does not charge or promise a duration until the commercial redemption policy is approved. Final legal copy, production keys, DNS and licensed photography are launch inputs, documented as external blockers rather than hidden code gaps.

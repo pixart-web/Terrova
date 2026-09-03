@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import { IndividualBottle } from '../art-direction/temporary-assets'
-import { defaultJourneyPlanId, formatPlanPrice, type PlanPresentation } from './journey-content'
+import { formatPlanPrice, type PlanPresentation } from './journey-content'
 
 export function PlanSelector({ plans }: { plans: readonly PlanPresentation[] }) {
-  const [activePlanId, setActivePlanId] = useState(defaultJourneyPlanId)
+  const [activePlanId, setActivePlanId] = useState(
+    plans.find((plan) => plan.highlighted)?.id ?? plans[0]?.id ?? '',
+  )
   const [enhanced, setEnhanced] = useState(false)
 
   useEffect(() => {

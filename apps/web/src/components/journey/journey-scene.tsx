@@ -1,8 +1,36 @@
-import { journeyPlans } from './journey-content'
+import type { SubscriptionPlan } from '@terrova/types'
+
+import { journeyPlans, type PlanPresentation } from './journey-content'
 import { JourneyMotionBoundary } from './journey-motion-boundary'
 import { PlanSelector } from './plan-selector'
 
-export function JourneyScene() {
+const tones: PlanPresentation['tone'][] = ['terracotta', 'vine', 'wine']
+
+function mergeCMSPlans(plans: readonly SubscriptionPlan[]): readonly PlanPresentation[] {
+  if (!plans.length) return journeyPlans
+  return plans.map((plan, index) => {
+    const presentation =
+      journeyPlans.find((candidate) => candidate.id === plan.code) ??
+      journeyPlans[index % journeyPlans.length]
+    return {
+      ...presentation,
+      id: plan.code,
+      code: plan.code,
+      name: plan.name,
+      price: { amount: plan.price.amount / 100, currency: plan.price.currency },
+      cadence: plan.cadence,
+      positioning: plan.positioning,
+      description: plan.description ?? presentation.description,
+      highlighted: Boolean(plan.mostPopular),
+      highlightLabel: plan.mostPopular ? 'Most Popular' : undefined,
+      ctaLabel: `Choose ${plan.name}`,
+      ctaHref: `/boxes?plan=${encodeURIComponent(plan.code)}`,
+      tone: presentation.tone ?? tones[index % tones.length],
+    }
+  })
+}
+
+export function JourneyScene({ plans }: { plans: readonly SubscriptionPlan[] }) {
   return (
     <JourneyMotionBoundary>
       <div className="journey-sticky">
@@ -22,7 +50,7 @@ export function JourneyScene() {
         </header>
 
         <div data-journey-plans>
-          <PlanSelector plans={journeyPlans} />
+          <PlanSelector plans={mergeCMSPlans(plans)} />
         </div>
 
         <div className="scene-handoff journey-handoff" data-journey-handoff aria-hidden="true">

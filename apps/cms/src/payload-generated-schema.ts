@@ -15,9 +15,9 @@ import {
   integer,
   varchar,
   serial,
+  boolean,
   timestamp,
   numeric,
-  boolean,
   jsonb,
   pgEnum,
 } from '@payloadcms/db-postgres/drizzle/pg-core'
@@ -29,6 +29,12 @@ export const enum_plans_cadence = pgEnum('enum_plans_cadence', [
   'quarterly',
 ])
 export const enum_plans_currency = pgEnum('enum_plans_currency', ['EUR', 'GBP', 'USD'])
+export const enum_wines_status = pgEnum('enum_wines_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
 export const enum_wines_style = pgEnum('enum_wines_style', [
   'red',
   'white',
@@ -38,12 +44,96 @@ export const enum_wines_style = pgEnum('enum_wines_style', [
   'fortified',
 ])
 export const enum_wine_skus_currency = pgEnum('enum_wine_skus_currency', ['EUR', 'GBP', 'USD'])
-export const enum_grapes_colour = pgEnum('enum_grapes_colour', ['red', 'white', 'pink', 'grey'])
-export const enum_editions_release_state = pgEnum('enum_editions_release_state', [
+export const enum_producers_status = pgEnum('enum_producers_status', [
   'draft',
-  'preview',
+  'scheduled',
   'live',
   'archived',
+])
+export const enum_regions_status = pgEnum('enum_regions_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
+export const enum_grapes_colour = pgEnum('enum_grapes_colour', ['red', 'white', 'pink', 'grey'])
+export const enum_editions_status = pgEnum('enum_editions_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
+export const enum_boxes_status = pgEnum('enum_boxes_status', [
+  'draft',
+  'ready',
+  'packing',
+  'closed',
+  'archived',
+])
+export const enum_inventory_movements_reason = pgEnum('enum_inventory_movements_reason', [
+  'receipt',
+  'allocation',
+  'release',
+  'fulfilment',
+  'adjustment',
+  'damage',
+  'return',
+])
+export const enum_customers_status = pgEnum('enum_customers_status', [
+  'pending_verification',
+  'active',
+  'disabled',
+])
+export const enum_subscriptions_status = pgEnum('enum_subscriptions_status', [
+  'pending',
+  'active',
+  'paused',
+  'payment_issue',
+  'cancelled',
+])
+export const enum_orders_status = pgEnum('enum_orders_status', [
+  'pending',
+  'paid',
+  'preparing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'refunded',
+])
+export const enum_orders_currency = pgEnum('enum_orders_currency', ['EUR', 'GBP', 'USD'])
+export const enum_order_items_currency = pgEnum('enum_order_items_currency', ['EUR', 'GBP', 'USD'])
+export const enum_taste_signals_category = pgEnum('enum_taste_signals_category', [
+  'grape',
+  'region',
+  'country',
+  'style',
+])
+export const enum_journal_posts_status = pgEnum('enum_journal_posts_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
+export const enum_pages_status = pgEnum('enum_pages_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
+export const enum_gifts_status = pgEnum('enum_gifts_status', [
+  'draft',
+  'checkout_pending',
+  'purchased',
+  'notified',
+  'redeemed',
+  'cancelled',
+])
+export const enum_webhook_events_provider = pgEnum('enum_webhook_events_provider', ['stripe'])
+export const enum_webhook_events_status = pgEnum('enum_webhook_events_status', [
+  'processing',
+  'processed',
+  'failed',
+  'ignored',
 ])
 export const enum_users_role = pgEnum('enum_users_role', ['admin', 'editor'])
 
@@ -72,6 +162,9 @@ export const brands = pgTable(
     id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
     slug: varchar('slug').notNull(),
+    locale: varchar('locale').notNull().default('en-GB'),
+    supportEmail: varchar('support_email').notNull().default('hello@terrova.net'),
+    active: boolean('active').default(true),
     currency: enum_brands_currency('currency').notNull().default('EUR'),
     theme_ink: varchar('theme_ink').notNull().default('#171714'),
     theme_cream: varchar('theme_cream').notNull().default('#F3EFE4'),
@@ -86,6 +179,7 @@ export const brands = pgTable(
   },
   (columns) => [
     uniqueIndex('brands_slug_idx').on(columns.slug),
+    index('brands_active_idx').on(columns.active),
     index('brands_updated_at_idx').on(columns.updatedAt),
     index('brands_created_at_idx').on(columns.createdAt),
   ],
@@ -103,8 +197,9 @@ export const plans = pgTable(
     name: varchar('name').notNull(),
     code: varchar('code').notNull(),
     description: varchar('description'),
+    positioning: varchar('positioning').notNull(),
+    mostPopular: boolean('most_popular').default(false),
     cadence: enum_plans_cadence('cadence').notNull(),
-    bottlesPerBox: numeric('bottles_per_box', { mode: 'number' }).notNull(),
     priceAmount: numeric('price_amount', { mode: 'number' }).notNull(),
     currency: enum_plans_currency('currency').notNull().default('EUR'),
     externalPriceId: varchar('external_price_id'),
@@ -135,6 +230,8 @@ export const wines = pgTable(
       }),
     name: varchar('name').notNull(),
     slug: varchar('slug').notNull(),
+    status: enum_wines_status('status').notNull().default('draft'),
+    introduction: varchar('introduction'),
     producer: integer('producer_id')
       .notNull()
       .references(() => producers.id, {
@@ -166,6 +263,7 @@ export const wines = pgTable(
   (columns) => [
     index('wines_brand_idx').on(columns.brand),
     uniqueIndex('wines_slug_idx').on(columns.slug),
+    index('wines_status_idx').on(columns.status),
     index('wines_producer_idx').on(columns.producer),
     index('wines_country_idx').on(columns.country),
     index('wines_region_idx').on(columns.region),
@@ -211,11 +309,18 @@ export const wine_skus = pgTable(
       .references(() => wines.id, {
         onDelete: 'set null',
       }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
     sku: varchar('sku').notNull(),
     bottleSizeMl: numeric('bottle_size_ml', { mode: 'number' }).notNull().default(750),
     priceAmount: numeric('price_amount', { mode: 'number' }).notNull(),
     currency: enum_wine_skus_currency('currency').notNull().default('EUR'),
     active: boolean('active').default(true),
+    stockOnHand: numeric('stock_on_hand', { mode: 'number' }).notNull().default(0),
+    stockReserved: numeric('stock_reserved', { mode: 'number' }).notNull().default(0),
     externalProductId: varchar('external_product_id'),
     externalPriceId: varchar('external_price_id'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
@@ -227,6 +332,7 @@ export const wine_skus = pgTable(
   },
   (columns) => [
     index('wine_skus_wine_idx').on(columns.wine),
+    index('wine_skus_brand_idx').on(columns.brand),
     uniqueIndex('wine_skus_sku_idx').on(columns.sku),
     index('wine_skus_updated_at_idx').on(columns.updatedAt),
     index('wine_skus_created_at_idx').on(columns.createdAt),
@@ -239,6 +345,8 @@ export const producers = pgTable(
     id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
     slug: varchar('slug').notNull(),
+    status: enum_producers_status('status').notNull().default('draft'),
+    introduction: varchar('introduction'),
     country: integer('country_id')
       .notNull()
       .references(() => countries.id, {
@@ -251,6 +359,8 @@ export const producers = pgTable(
       onDelete: 'set null',
     }),
     story: jsonb('story'),
+    seo_title: varchar('seo_title'),
+    seo_description: varchar('seo_description'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -260,6 +370,7 @@ export const producers = pgTable(
   },
   (columns) => [
     uniqueIndex('producers_slug_idx').on(columns.slug),
+    index('producers_status_idx').on(columns.status),
     index('producers_country_idx').on(columns.country),
     index('producers_region_idx').on(columns.region),
     index('producers_portrait_idx').on(columns.portrait),
@@ -321,6 +432,7 @@ export const regions = pgTable(
     id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
     slug: varchar('slug').notNull(),
+    status: enum_regions_status('status').notNull().default('draft'),
     country: integer('country_id')
       .notNull()
       .references(() => countries.id, {
@@ -339,6 +451,7 @@ export const regions = pgTable(
   },
   (columns) => [
     uniqueIndex('regions_slug_idx').on(columns.slug),
+    index('regions_status_idx').on(columns.status),
     index('regions_country_idx').on(columns.country),
     index('regions_hero_idx').on(columns.hero),
     index('regions_updated_at_idx').on(columns.updatedAt),
@@ -385,6 +498,30 @@ export const grapes = pgTable(
   ],
 )
 
+export const editions_story_chapters = pgTable(
+  'editions_story_chapters',
+  {
+    _order: integer('_order').notNull(),
+    _parentID: integer('_parent_id').notNull(),
+    id: varchar('id').primaryKey(),
+    title: varchar('title').notNull(),
+    body: jsonb('body').notNull(),
+    media: integer('media_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (columns) => [
+    index('editions_story_chapters_order_idx').on(columns._order),
+    index('editions_story_chapters_parent_id_idx').on(columns._parentID),
+    index('editions_story_chapters_media_idx').on(columns.media),
+    foreignKey({
+      columns: [columns['_parentID']],
+      foreignColumns: [editions.id],
+      name: 'editions_story_chapters_parent_id_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
 export const editions = pgTable(
   'editions',
   {
@@ -395,10 +532,21 @@ export const editions = pgTable(
         onDelete: 'set null',
       }),
     title: varchar('title').notNull(),
+    code: varchar('code').notNull(),
     slug: varchar('slug').notNull(),
-    releaseState: enum_editions_release_state('release_state').notNull().default('draft'),
-    opensAt: timestamp('opens_at', { mode: 'string', withTimezone: true, precision: 3 }),
-    closesAt: timestamp('closes_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    status: enum_editions_status('status').notNull().default('draft'),
+    period: varchar('period').notNull(),
+    periodStart: timestamp('period_start', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    periodEnd: timestamp('period_end', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    publishAt: timestamp('publish_at', { mode: 'string', withTimezone: true, precision: 3 }),
     region: integer('region_id').references(() => regions.id, {
       onDelete: 'set null',
     }),
@@ -415,11 +563,49 @@ export const editions = pgTable(
   },
   (columns) => [
     index('editions_brand_idx').on(columns.brand),
+    uniqueIndex('editions_code_idx').on(columns.code),
     uniqueIndex('editions_slug_idx').on(columns.slug),
+    index('editions_status_idx').on(columns.status),
+    index('editions_period_start_idx').on(columns.periodStart),
+    index('editions_publish_at_idx').on(columns.publishAt),
     index('editions_region_idx').on(columns.region),
     index('editions_hero_idx').on(columns.hero),
     index('editions_updated_at_idx').on(columns.updatedAt),
     index('editions_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const editions_rels = pgTable(
+  'editions_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    plansID: integer('plans_id'),
+    'wine-skusID': integer('wine_skus_id'),
+  },
+  (columns) => [
+    index('editions_rels_order_idx').on(columns.order),
+    index('editions_rels_parent_idx').on(columns.parent),
+    index('editions_rels_path_idx').on(columns.path),
+    index('editions_rels_plans_id_idx').on(columns.plansID),
+    index('editions_rels_wine_skus_id_idx').on(columns['wine-skusID']),
+    foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [editions.id],
+      name: 'editions_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['plansID']],
+      foreignColumns: [plans.id],
+      name: 'editions_rels_plans_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['wine-skusID']],
+      foreignColumns: [wine_skus.id],
+      name: 'editions_rels_wine_skus_fk',
+    }).onDelete('cascade'),
   ],
 )
 
@@ -443,7 +629,19 @@ export const boxes = pgTable(
         onDelete: 'set null',
       }),
     name: varchar('name').notNull(),
+    code: varchar('code').notNull(),
+    status: enum_boxes_status('status').notNull().default('draft'),
     packingNote: varchar('packing_note'),
+    packingDeadline: timestamp('packing_deadline', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    expectedShipAt: timestamp('expected_ship_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -455,6 +653,8 @@ export const boxes = pgTable(
     index('boxes_brand_idx').on(columns.brand),
     index('boxes_edition_idx').on(columns.edition),
     index('boxes_plan_idx').on(columns.plan),
+    uniqueIndex('boxes_code_idx').on(columns.code),
+    index('boxes_status_idx').on(columns.status),
     index('boxes_updated_at_idx').on(columns.updatedAt),
     index('boxes_created_at_idx').on(columns.createdAt),
   ],
@@ -487,6 +687,711 @@ export const boxes_rels = pgTable(
   ],
 )
 
+export const inventory_movements = pgTable(
+  'inventory_movements',
+  {
+    id: serial('id').primaryKey(),
+    reference: varchar('reference').notNull(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    sku: integer('sku_id')
+      .notNull()
+      .references(() => wine_skus.id, {
+        onDelete: 'set null',
+      }),
+    order: integer('order_id').references(() => orders.id, {
+      onDelete: 'set null',
+    }),
+    reason: enum_inventory_movements_reason('reason').notNull(),
+    quantityDelta: numeric('quantity_delta', { mode: 'number' }).notNull(),
+    reservedDelta: numeric('reserved_delta', { mode: 'number' }).notNull().default(0),
+    balanceAfter: numeric('balance_after', { mode: 'number' }).notNull(),
+    reservedBalanceAfter: numeric('reserved_balance_after', { mode: 'number' }).notNull(),
+    note: varchar('note'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('inventory_movements_reference_idx').on(columns.reference),
+    index('inventory_movements_brand_idx').on(columns.brand),
+    index('inventory_movements_sku_idx').on(columns.sku),
+    index('inventory_movements_order_idx').on(columns.order),
+    index('inventory_movements_updated_at_idx').on(columns.updatedAt),
+    index('inventory_movements_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const customers_sessions = pgTable(
+  'customers_sessions',
+  {
+    _order: integer('_order').notNull(),
+    _parentID: integer('_parent_id').notNull(),
+    id: varchar('id').primaryKey(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    expiresAt: timestamp('expires_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+  },
+  (columns) => [
+    index('customers_sessions_order_idx').on(columns._order),
+    index('customers_sessions_parent_id_idx').on(columns._parentID),
+    foreignKey({
+      columns: [columns['_parentID']],
+      foreignColumns: [customers.id],
+      name: 'customers_sessions_parent_id_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
+export const customers = pgTable(
+  'customers',
+  {
+    id: serial('id').primaryKey(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    name: varchar('name').notNull(),
+    status: enum_customers_status('status').notNull().default('active'),
+    externalCustomerId: varchar('external_customer_id'),
+    marketingConsent: boolean('marketing_consent').default(false),
+    termsAcceptedAt: timestamp('terms_accepted_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    email: varchar('email').notNull(),
+    resetPasswordToken: varchar('reset_password_token'),
+    resetPasswordExpiration: timestamp('reset_password_expiration', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    salt: varchar('salt'),
+    hash: varchar('hash'),
+    _verified: boolean('_verified'),
+    _verificationToken: varchar('_verificationtoken'),
+    loginAttempts: numeric('login_attempts', { mode: 'number' }).default(0),
+    lockUntil: timestamp('lock_until', { mode: 'string', withTimezone: true, precision: 3 }),
+  },
+  (columns) => [
+    index('customers_brand_idx').on(columns.brand),
+    index('customers_status_idx').on(columns.status),
+    uniqueIndex('customers_external_customer_id_idx').on(columns.externalCustomerId),
+    index('customers_updated_at_idx').on(columns.updatedAt),
+    index('customers_created_at_idx').on(columns.createdAt),
+    uniqueIndex('customers_email_idx').on(columns.email),
+  ],
+)
+
+export const addresses = pgTable(
+  'addresses',
+  {
+    id: serial('id').primaryKey(),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    label: varchar('label').notNull().default('Home'),
+    recipientName: varchar('recipient_name').notNull(),
+    line1: varchar('line1').notNull(),
+    line2: varchar('line2'),
+    city: varchar('city').notNull(),
+    postalCode: varchar('postal_code').notNull(),
+    countryCode: varchar('country_code').notNull(),
+    isDefault: boolean('is_default').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('addresses_customer_idx').on(columns.customer),
+    index('addresses_brand_idx').on(columns.brand),
+    index('addresses_updated_at_idx').on(columns.updatedAt),
+    index('addresses_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code').notNull(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    plan: integer('plan_id')
+      .notNull()
+      .references(() => plans.id, {
+        onDelete: 'set null',
+      }),
+    status: enum_subscriptions_status('status').notNull().default('pending'),
+    currentPeriodStart: timestamp('current_period_start', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    currentPeriodEnd: timestamp('current_period_end', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+    providerSubscriptionId: varchar('provider_subscription_id'),
+    providerCustomerId: varchar('provider_customer_id'),
+    lastProviderEventAt: timestamp('last_provider_event_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('subscriptions_code_idx').on(columns.code),
+    index('subscriptions_brand_idx').on(columns.brand),
+    index('subscriptions_customer_idx').on(columns.customer),
+    index('subscriptions_plan_idx').on(columns.plan),
+    index('subscriptions_status_idx').on(columns.status),
+    index('subscriptions_current_period_end_idx').on(columns.currentPeriodEnd),
+    uniqueIndex('subscriptions_provider_subscription_id_idx').on(columns.providerSubscriptionId),
+    index('subscriptions_provider_customer_id_idx').on(columns.providerCustomerId),
+    index('subscriptions_updated_at_idx').on(columns.updatedAt),
+    index('subscriptions_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code').notNull(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    subscription: integer('subscription_id').references(() => subscriptions.id, {
+      onDelete: 'set null',
+    }),
+    edition: integer('edition_id').references(() => editions.id, {
+      onDelete: 'set null',
+    }),
+    box: integer('box_id').references(() => boxes.id, {
+      onDelete: 'set null',
+    }),
+    shippingAddress: integer('shipping_address_id').references(() => addresses.id, {
+      onDelete: 'set null',
+    }),
+    status: enum_orders_status('status').notNull().default('pending'),
+    totalAmount: numeric('total_amount', { mode: 'number' }).notNull(),
+    currency: enum_orders_currency('currency').notNull(),
+    providerCheckoutId: varchar('provider_checkout_id'),
+    providerInvoiceId: varchar('provider_invoice_id'),
+    paidAt: timestamp('paid_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    shippedAt: timestamp('shipped_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    trackingReference: varchar('tracking_reference'),
+    operatorNote: varchar('operator_note'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('orders_code_idx').on(columns.code),
+    index('orders_brand_idx').on(columns.brand),
+    index('orders_customer_idx').on(columns.customer),
+    index('orders_subscription_idx').on(columns.subscription),
+    index('orders_edition_idx').on(columns.edition),
+    index('orders_box_idx').on(columns.box),
+    index('orders_shipping_address_idx').on(columns.shippingAddress),
+    index('orders_status_idx').on(columns.status),
+    uniqueIndex('orders_provider_checkout_id_idx').on(columns.providerCheckoutId),
+    uniqueIndex('orders_provider_invoice_id_idx').on(columns.providerInvoiceId),
+    index('orders_updated_at_idx').on(columns.updatedAt),
+    index('orders_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const order_items = pgTable(
+  'order_items',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order_id')
+      .notNull()
+      .references(() => orders.id, {
+        onDelete: 'set null',
+      }),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    wineSKU: integer('wine_s_k_u_id').references(() => wine_skus.id, {
+      onDelete: 'set null',
+    }),
+    description: varchar('description').notNull(),
+    quantity: numeric('quantity', { mode: 'number' }).notNull(),
+    unitAmount: numeric('unit_amount', { mode: 'number' }).notNull(),
+    currency: enum_order_items_currency('currency').notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('order_items_order_idx').on(columns.order),
+    index('order_items_customer_idx').on(columns.customer),
+    index('order_items_brand_idx').on(columns.brand),
+    index('order_items_wine_s_k_u_idx').on(columns.wineSKU),
+    index('order_items_updated_at_idx').on(columns.updatedAt),
+    index('order_items_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const cellar_entries = pgTable(
+  'cellar_entries',
+  {
+    id: serial('id').primaryKey(),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    wine: integer('wine_id')
+      .notNull()
+      .references(() => wines.id, {
+        onDelete: 'set null',
+      }),
+    wineSKU: integer('wine_s_k_u_id').references(() => wine_skus.id, {
+      onDelete: 'set null',
+    }),
+    order: integer('order_id')
+      .notNull()
+      .references(() => orders.id, {
+        onDelete: 'set null',
+      }),
+    experiencedAt: timestamp('experienced_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('cellar_entries_customer_idx').on(columns.customer),
+    index('cellar_entries_brand_idx').on(columns.brand),
+    index('cellar_entries_wine_idx').on(columns.wine),
+    index('cellar_entries_wine_s_k_u_idx').on(columns.wineSKU),
+    index('cellar_entries_order_idx').on(columns.order),
+    index('cellar_entries_experienced_at_idx').on(columns.experiencedAt),
+    index('cellar_entries_updated_at_idx').on(columns.updatedAt),
+    index('cellar_entries_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const ratings = pgTable(
+  'ratings',
+  {
+    id: serial('id').primaryKey(),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    wine: integer('wine_id')
+      .notNull()
+      .references(() => wines.id, {
+        onDelete: 'set null',
+      }),
+    cellarEntry: integer('cellar_entry_id').references(() => cellar_entries.id, {
+      onDelete: 'set null',
+    }),
+    score: numeric('score', { mode: 'number' }).notNull(),
+    wouldDrinkAgain: boolean('would_drink_again'),
+    note: varchar('note'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('ratings_customer_idx').on(columns.customer),
+    index('ratings_brand_idx').on(columns.brand),
+    index('ratings_wine_idx').on(columns.wine),
+    index('ratings_cellar_entry_idx').on(columns.cellarEntry),
+    index('ratings_updated_at_idx').on(columns.updatedAt),
+    index('ratings_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const taste_signals = pgTable(
+  'taste_signals',
+  {
+    id: serial('id').primaryKey(),
+    customer: integer('customer_id')
+      .notNull()
+      .references(() => customers.id, {
+        onDelete: 'set null',
+      }),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    category: enum_taste_signals_category('category').notNull(),
+    key: varchar('key').notNull(),
+    label: varchar('label').notNull(),
+    score: numeric('score', { mode: 'number' }).notNull(),
+    observations: numeric('observations', { mode: 'number' }).notNull(),
+    calculatedAt: timestamp('calculated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('taste_signals_customer_idx').on(columns.customer),
+    index('taste_signals_brand_idx').on(columns.brand),
+    index('taste_signals_key_idx').on(columns.key),
+    index('taste_signals_updated_at_idx').on(columns.updatedAt),
+    index('taste_signals_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const journal_posts = pgTable(
+  'journal_posts',
+  {
+    id: serial('id').primaryKey(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    title: varchar('title').notNull(),
+    slug: varchar('slug').notNull(),
+    excerpt: varchar('excerpt').notNull(),
+    body: jsonb('body').notNull(),
+    hero: integer('hero_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+    authorName: varchar('author_name'),
+    publishedAt: timestamp('published_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    status: enum_journal_posts_status('status').notNull().default('draft'),
+    publishAt: timestamp('publish_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    seo_title: varchar('seo_title'),
+    seo_description: varchar('seo_description'),
+    seo_image: integer('seo_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+    seo_noIndex: boolean('seo_no_index').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('journal_posts_brand_idx').on(columns.brand),
+    uniqueIndex('journal_posts_slug_idx').on(columns.slug),
+    index('journal_posts_hero_idx').on(columns.hero),
+    index('journal_posts_published_at_idx').on(columns.publishedAt),
+    index('journal_posts_status_idx').on(columns.status),
+    index('journal_posts_publish_at_idx').on(columns.publishAt),
+    index('journal_posts_seo_seo_image_idx').on(columns.seo_image),
+    index('journal_posts_updated_at_idx').on(columns.updatedAt),
+    index('journal_posts_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const pages = pgTable(
+  'pages',
+  {
+    id: serial('id').primaryKey(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    title: varchar('title').notNull(),
+    slug: varchar('slug').notNull(),
+    eyebrow: varchar('eyebrow'),
+    introduction: varchar('introduction'),
+    body: jsonb('body').notNull(),
+    status: enum_pages_status('status').notNull().default('draft'),
+    publishAt: timestamp('publish_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    seo_title: varchar('seo_title'),
+    seo_description: varchar('seo_description'),
+    seo_image: integer('seo_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+    seo_noIndex: boolean('seo_no_index').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('pages_brand_idx').on(columns.brand),
+    uniqueIndex('pages_slug_idx').on(columns.slug),
+    index('pages_status_idx').on(columns.status),
+    index('pages_publish_at_idx').on(columns.publishAt),
+    index('pages_seo_seo_image_idx').on(columns.seo_image),
+    index('pages_updated_at_idx').on(columns.updatedAt),
+    index('pages_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const gifts = pgTable(
+  'gifts',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code').notNull(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    customer: integer('customer_id').references(() => customers.id, {
+      onDelete: 'set null',
+    }),
+    plan: integer('plan_id')
+      .notNull()
+      .references(() => plans.id, {
+        onDelete: 'set null',
+      }),
+    purchaserEmail: varchar('purchaser_email').notNull(),
+    recipientName: varchar('recipient_name').notNull(),
+    recipientEmail: varchar('recipient_email').notNull(),
+    message: varchar('message'),
+    startsAt: timestamp('starts_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    status: enum_gifts_status('status').notNull().default('draft'),
+    providerCheckoutId: varchar('provider_checkout_id'),
+    redemptionTokenHash: varchar('redemption_token_hash'),
+    redeemedAt: timestamp('redeemed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('gifts_code_idx').on(columns.code),
+    index('gifts_brand_idx').on(columns.brand),
+    index('gifts_customer_idx').on(columns.customer),
+    index('gifts_plan_idx').on(columns.plan),
+    index('gifts_purchaser_email_idx').on(columns.purchaserEmail),
+    index('gifts_status_idx').on(columns.status),
+    uniqueIndex('gifts_provider_checkout_id_idx').on(columns.providerCheckoutId),
+    index('gifts_redemption_token_hash_idx').on(columns.redemptionTokenHash),
+    index('gifts_updated_at_idx').on(columns.updatedAt),
+    index('gifts_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const promotions = pgTable(
+  'promotions',
+  {
+    id: serial('id').primaryKey(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    name: varchar('name').notNull(),
+    code: varchar('code').notNull(),
+    providerPromotionCodeId: varchar('provider_promotion_code_id'),
+    active: boolean('active').default(true),
+    startsAt: timestamp('starts_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    endsAt: timestamp('ends_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    usageLimit: numeric('usage_limit', { mode: 'number' }),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('promotions_brand_idx').on(columns.brand),
+    uniqueIndex('promotions_code_idx').on(columns.code),
+    uniqueIndex('promotions_provider_promotion_code_id_idx').on(columns.providerPromotionCodeId),
+    index('promotions_active_idx').on(columns.active),
+    index('promotions_updated_at_idx').on(columns.updatedAt),
+    index('promotions_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const site_settings_shipping_countries = pgTable(
+  'site_settings_shipping_countries',
+  {
+    _order: integer('_order').notNull(),
+    _parentID: integer('_parent_id').notNull(),
+    id: varchar('id').primaryKey(),
+    countryCode: varchar('country_code').notNull(),
+    label: varchar('label').notNull(),
+  },
+  (columns) => [
+    index('site_settings_shipping_countries_order_idx').on(columns._order),
+    index('site_settings_shipping_countries_parent_id_idx').on(columns._parentID),
+    foreignKey({
+      columns: [columns['_parentID']],
+      foreignColumns: [site_settings.id],
+      name: 'site_settings_shipping_countries_parent_id_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
+export const site_settings = pgTable(
+  'site_settings',
+  {
+    id: serial('id').primaryKey(),
+    brand: integer('brand_id')
+      .notNull()
+      .references(() => brands.id, {
+        onDelete: 'set null',
+      }),
+    siteName: varchar('site_name').notNull(),
+    siteUrl: varchar('site_url').notNull(),
+    defaultTitle: varchar('default_title').notNull(),
+    defaultDescription: varchar('default_description').notNull(),
+    supportEmail: varchar('support_email').notNull(),
+    ageGateEnabled: boolean('age_gate_enabled').default(true),
+    minimumAge: numeric('minimum_age', { mode: 'number' }).notNull().default(18),
+    termsReviewedAt: timestamp('terms_reviewed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    privacyReviewedAt: timestamp('privacy_reviewed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('site_settings_brand_idx').on(columns.brand),
+    index('site_settings_updated_at_idx').on(columns.updatedAt),
+    index('site_settings_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const webhook_events = pgTable(
+  'webhook_events',
+  {
+    id: serial('id').primaryKey(),
+    provider: enum_webhook_events_provider('provider').notNull(),
+    providerEventId: varchar('provider_event_id').notNull(),
+    eventType: varchar('event_type').notNull(),
+    livemode: boolean('livemode').notNull().default(false),
+    status: enum_webhook_events_status('status').notNull().default('processing'),
+    receivedAt: timestamp('received_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    processedAt: timestamp('processed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    attempts: numeric('attempts', { mode: 'number' }).notNull().default(1),
+    errorCode: varchar('error_code'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    uniqueIndex('webhook_events_provider_event_id_idx').on(columns.providerEventId),
+    index('webhook_events_event_type_idx').on(columns.eventType),
+    index('webhook_events_status_idx').on(columns.status),
+    index('webhook_events_updated_at_idx').on(columns.updatedAt),
+    index('webhook_events_created_at_idx').on(columns.createdAt),
+  ],
+)
+
 export const media = pgTable(
   'media',
   {
@@ -494,6 +1399,7 @@ export const media = pgTable(
     alt: varchar('alt').notNull(),
     caption: varchar('caption'),
     credit: varchar('credit'),
+    prefix: varchar('prefix').default('media'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -632,6 +1538,21 @@ export const payload_locked_documents_rels = pgTable(
     grapesID: integer('grapes_id'),
     editionsID: integer('editions_id'),
     boxesID: integer('boxes_id'),
+    'inventory-movementsID': integer('inventory_movements_id'),
+    customersID: integer('customers_id'),
+    addressesID: integer('addresses_id'),
+    subscriptionsID: integer('subscriptions_id'),
+    ordersID: integer('orders_id'),
+    'order-itemsID': integer('order_items_id'),
+    'cellar-entriesID': integer('cellar_entries_id'),
+    ratingsID: integer('ratings_id'),
+    'taste-signalsID': integer('taste_signals_id'),
+    'journal-postsID': integer('journal_posts_id'),
+    pagesID: integer('pages_id'),
+    giftsID: integer('gifts_id'),
+    promotionsID: integer('promotions_id'),
+    'site-settingsID': integer('site_settings_id'),
+    'webhook-eventsID': integer('webhook_events_id'),
     mediaID: integer('media_id'),
     usersID: integer('users_id'),
   },
@@ -649,6 +1570,23 @@ export const payload_locked_documents_rels = pgTable(
     index('payload_locked_documents_rels_grapes_id_idx').on(columns.grapesID),
     index('payload_locked_documents_rels_editions_id_idx').on(columns.editionsID),
     index('payload_locked_documents_rels_boxes_id_idx').on(columns.boxesID),
+    index('payload_locked_documents_rels_inventory_movements_id_idx').on(
+      columns['inventory-movementsID'],
+    ),
+    index('payload_locked_documents_rels_customers_id_idx').on(columns.customersID),
+    index('payload_locked_documents_rels_addresses_id_idx').on(columns.addressesID),
+    index('payload_locked_documents_rels_subscriptions_id_idx').on(columns.subscriptionsID),
+    index('payload_locked_documents_rels_orders_id_idx').on(columns.ordersID),
+    index('payload_locked_documents_rels_order_items_id_idx').on(columns['order-itemsID']),
+    index('payload_locked_documents_rels_cellar_entries_id_idx').on(columns['cellar-entriesID']),
+    index('payload_locked_documents_rels_ratings_id_idx').on(columns.ratingsID),
+    index('payload_locked_documents_rels_taste_signals_id_idx').on(columns['taste-signalsID']),
+    index('payload_locked_documents_rels_journal_posts_id_idx').on(columns['journal-postsID']),
+    index('payload_locked_documents_rels_pages_id_idx').on(columns.pagesID),
+    index('payload_locked_documents_rels_gifts_id_idx').on(columns.giftsID),
+    index('payload_locked_documents_rels_promotions_id_idx').on(columns.promotionsID),
+    index('payload_locked_documents_rels_site_settings_id_idx').on(columns['site-settingsID']),
+    index('payload_locked_documents_rels_webhook_events_id_idx').on(columns['webhook-eventsID']),
     index('payload_locked_documents_rels_media_id_idx').on(columns.mediaID),
     index('payload_locked_documents_rels_users_id_idx').on(columns.usersID),
     foreignKey({
@@ -707,6 +1645,81 @@ export const payload_locked_documents_rels = pgTable(
       name: 'payload_locked_documents_rels_boxes_fk',
     }).onDelete('cascade'),
     foreignKey({
+      columns: [columns['inventory-movementsID']],
+      foreignColumns: [inventory_movements.id],
+      name: 'payload_locked_documents_rels_inventory_movements_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['customersID']],
+      foreignColumns: [customers.id],
+      name: 'payload_locked_documents_rels_customers_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['addressesID']],
+      foreignColumns: [addresses.id],
+      name: 'payload_locked_documents_rels_addresses_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['subscriptionsID']],
+      foreignColumns: [subscriptions.id],
+      name: 'payload_locked_documents_rels_subscriptions_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['ordersID']],
+      foreignColumns: [orders.id],
+      name: 'payload_locked_documents_rels_orders_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['order-itemsID']],
+      foreignColumns: [order_items.id],
+      name: 'payload_locked_documents_rels_order_items_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['cellar-entriesID']],
+      foreignColumns: [cellar_entries.id],
+      name: 'payload_locked_documents_rels_cellar_entries_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['ratingsID']],
+      foreignColumns: [ratings.id],
+      name: 'payload_locked_documents_rels_ratings_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['taste-signalsID']],
+      foreignColumns: [taste_signals.id],
+      name: 'payload_locked_documents_rels_taste_signals_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['journal-postsID']],
+      foreignColumns: [journal_posts.id],
+      name: 'payload_locked_documents_rels_journal_posts_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['pagesID']],
+      foreignColumns: [pages.id],
+      name: 'payload_locked_documents_rels_pages_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['giftsID']],
+      foreignColumns: [gifts.id],
+      name: 'payload_locked_documents_rels_gifts_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['promotionsID']],
+      foreignColumns: [promotions.id],
+      name: 'payload_locked_documents_rels_promotions_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['site-settingsID']],
+      foreignColumns: [site_settings.id],
+      name: 'payload_locked_documents_rels_site_settings_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['webhook-eventsID']],
+      foreignColumns: [webhook_events.id],
+      name: 'payload_locked_documents_rels_webhook_events_fk',
+    }).onDelete('cascade'),
+    foreignKey({
       columns: [columns['mediaID']],
       foreignColumns: [media.id],
       name: 'payload_locked_documents_rels_media_fk',
@@ -746,17 +1759,24 @@ export const payload_preferences_rels = pgTable(
     order: integer('order'),
     parent: integer('parent_id').notNull(),
     path: varchar('path').notNull(),
+    customersID: integer('customers_id'),
     usersID: integer('users_id'),
   },
   (columns) => [
     index('payload_preferences_rels_order_idx').on(columns.order),
     index('payload_preferences_rels_parent_idx').on(columns.parent),
     index('payload_preferences_rels_path_idx').on(columns.path),
+    index('payload_preferences_rels_customers_id_idx').on(columns.customersID),
     index('payload_preferences_rels_users_id_idx').on(columns.usersID),
     foreignKey({
       columns: [columns['parent']],
       foreignColumns: [payload_preferences.id],
       name: 'payload_preferences_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['customersID']],
+      foreignColumns: [customers.id],
+      name: 'payload_preferences_rels_customers_fk',
     }).onDelete('cascade'),
     foreignKey({
       columns: [columns['usersID']],
@@ -852,6 +1872,11 @@ export const relations_wine_skus = relations(wine_skus, ({ one }) => ({
     references: [wines.id],
     relationName: 'wine',
   }),
+  brand: one(brands, {
+    fields: [wine_skus.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
 }))
 export const relations_producers_rels = relations(producers_rels, ({ one }) => ({
   parent: one(producers, {
@@ -910,7 +1935,36 @@ export const relations_grapes = relations(grapes, ({ many }) => ({
     relationName: 'aliases',
   }),
 }))
-export const relations_editions = relations(editions, ({ one }) => ({
+export const relations_editions_story_chapters = relations(editions_story_chapters, ({ one }) => ({
+  _parentID: one(editions, {
+    fields: [editions_story_chapters._parentID],
+    references: [editions.id],
+    relationName: 'storyChapters',
+  }),
+  media: one(media, {
+    fields: [editions_story_chapters.media],
+    references: [media.id],
+    relationName: 'media',
+  }),
+}))
+export const relations_editions_rels = relations(editions_rels, ({ one }) => ({
+  parent: one(editions, {
+    fields: [editions_rels.parent],
+    references: [editions.id],
+    relationName: '_rels',
+  }),
+  plansID: one(plans, {
+    fields: [editions_rels.plansID],
+    references: [plans.id],
+    relationName: 'plans',
+  }),
+  'wine-skusID': one(wine_skus, {
+    fields: [editions_rels['wine-skusID']],
+    references: [wine_skus.id],
+    relationName: 'wine-skus',
+  }),
+}))
+export const relations_editions = relations(editions, ({ one, many }) => ({
   brand: one(brands, {
     fields: [editions.brand],
     references: [brands.id],
@@ -925,6 +1979,12 @@ export const relations_editions = relations(editions, ({ one }) => ({
     fields: [editions.hero],
     references: [media.id],
     relationName: 'hero',
+  }),
+  storyChapters: many(editions_story_chapters, {
+    relationName: 'storyChapters',
+  }),
+  _rels: many(editions_rels, {
+    relationName: '_rels',
   }),
 }))
 export const relations_boxes_rels = relations(boxes_rels, ({ one }) => ({
@@ -959,6 +2019,258 @@ export const relations_boxes = relations(boxes, ({ one, many }) => ({
     relationName: '_rels',
   }),
 }))
+export const relations_inventory_movements = relations(inventory_movements, ({ one }) => ({
+  brand: one(brands, {
+    fields: [inventory_movements.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  sku: one(wine_skus, {
+    fields: [inventory_movements.sku],
+    references: [wine_skus.id],
+    relationName: 'sku',
+  }),
+  order: one(orders, {
+    fields: [inventory_movements.order],
+    references: [orders.id],
+    relationName: 'order',
+  }),
+}))
+export const relations_customers_sessions = relations(customers_sessions, ({ one }) => ({
+  _parentID: one(customers, {
+    fields: [customers_sessions._parentID],
+    references: [customers.id],
+    relationName: 'sessions',
+  }),
+}))
+export const relations_customers = relations(customers, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [customers.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  sessions: many(customers_sessions, {
+    relationName: 'sessions',
+  }),
+}))
+export const relations_addresses = relations(addresses, ({ one }) => ({
+  customer: one(customers, {
+    fields: [addresses.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  brand: one(brands, {
+    fields: [addresses.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+}))
+export const relations_subscriptions = relations(subscriptions, ({ one }) => ({
+  brand: one(brands, {
+    fields: [subscriptions.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  customer: one(customers, {
+    fields: [subscriptions.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  plan: one(plans, {
+    fields: [subscriptions.plan],
+    references: [plans.id],
+    relationName: 'plan',
+  }),
+}))
+export const relations_orders = relations(orders, ({ one }) => ({
+  brand: one(brands, {
+    fields: [orders.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  customer: one(customers, {
+    fields: [orders.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  subscription: one(subscriptions, {
+    fields: [orders.subscription],
+    references: [subscriptions.id],
+    relationName: 'subscription',
+  }),
+  edition: one(editions, {
+    fields: [orders.edition],
+    references: [editions.id],
+    relationName: 'edition',
+  }),
+  box: one(boxes, {
+    fields: [orders.box],
+    references: [boxes.id],
+    relationName: 'box',
+  }),
+  shippingAddress: one(addresses, {
+    fields: [orders.shippingAddress],
+    references: [addresses.id],
+    relationName: 'shippingAddress',
+  }),
+}))
+export const relations_order_items = relations(order_items, ({ one }) => ({
+  order: one(orders, {
+    fields: [order_items.order],
+    references: [orders.id],
+    relationName: 'order',
+  }),
+  customer: one(customers, {
+    fields: [order_items.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  brand: one(brands, {
+    fields: [order_items.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  wineSKU: one(wine_skus, {
+    fields: [order_items.wineSKU],
+    references: [wine_skus.id],
+    relationName: 'wineSKU',
+  }),
+}))
+export const relations_cellar_entries = relations(cellar_entries, ({ one }) => ({
+  customer: one(customers, {
+    fields: [cellar_entries.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  brand: one(brands, {
+    fields: [cellar_entries.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  wine: one(wines, {
+    fields: [cellar_entries.wine],
+    references: [wines.id],
+    relationName: 'wine',
+  }),
+  wineSKU: one(wine_skus, {
+    fields: [cellar_entries.wineSKU],
+    references: [wine_skus.id],
+    relationName: 'wineSKU',
+  }),
+  order: one(orders, {
+    fields: [cellar_entries.order],
+    references: [orders.id],
+    relationName: 'order',
+  }),
+}))
+export const relations_ratings = relations(ratings, ({ one }) => ({
+  customer: one(customers, {
+    fields: [ratings.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  brand: one(brands, {
+    fields: [ratings.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  wine: one(wines, {
+    fields: [ratings.wine],
+    references: [wines.id],
+    relationName: 'wine',
+  }),
+  cellarEntry: one(cellar_entries, {
+    fields: [ratings.cellarEntry],
+    references: [cellar_entries.id],
+    relationName: 'cellarEntry',
+  }),
+}))
+export const relations_taste_signals = relations(taste_signals, ({ one }) => ({
+  customer: one(customers, {
+    fields: [taste_signals.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  brand: one(brands, {
+    fields: [taste_signals.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+}))
+export const relations_journal_posts = relations(journal_posts, ({ one }) => ({
+  brand: one(brands, {
+    fields: [journal_posts.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  hero: one(media, {
+    fields: [journal_posts.hero],
+    references: [media.id],
+    relationName: 'hero',
+  }),
+  seo_image: one(media, {
+    fields: [journal_posts.seo_image],
+    references: [media.id],
+    relationName: 'seo_image',
+  }),
+}))
+export const relations_pages = relations(pages, ({ one }) => ({
+  brand: one(brands, {
+    fields: [pages.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  seo_image: one(media, {
+    fields: [pages.seo_image],
+    references: [media.id],
+    relationName: 'seo_image',
+  }),
+}))
+export const relations_gifts = relations(gifts, ({ one }) => ({
+  brand: one(brands, {
+    fields: [gifts.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  customer: one(customers, {
+    fields: [gifts.customer],
+    references: [customers.id],
+    relationName: 'customer',
+  }),
+  plan: one(plans, {
+    fields: [gifts.plan],
+    references: [plans.id],
+    relationName: 'plan',
+  }),
+}))
+export const relations_promotions = relations(promotions, ({ one }) => ({
+  brand: one(brands, {
+    fields: [promotions.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+}))
+export const relations_site_settings_shipping_countries = relations(
+  site_settings_shipping_countries,
+  ({ one }) => ({
+    _parentID: one(site_settings, {
+      fields: [site_settings_shipping_countries._parentID],
+      references: [site_settings.id],
+      relationName: 'shippingCountries',
+    }),
+  }),
+)
+export const relations_site_settings = relations(site_settings, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [site_settings.brand],
+    references: [brands.id],
+    relationName: 'brand',
+  }),
+  shippingCountries: many(site_settings_shipping_countries, {
+    relationName: 'shippingCountries',
+  }),
+}))
+export const relations_webhook_events = relations(webhook_events, () => ({}))
 export const relations_media = relations(media, () => ({}))
 export const relations_users_sessions = relations(users_sessions, ({ one }) => ({
   _parentID: one(users, {
@@ -1031,6 +2343,81 @@ export const relations_payload_locked_documents_rels = relations(
       references: [boxes.id],
       relationName: 'boxes',
     }),
+    'inventory-movementsID': one(inventory_movements, {
+      fields: [payload_locked_documents_rels['inventory-movementsID']],
+      references: [inventory_movements.id],
+      relationName: 'inventory-movements',
+    }),
+    customersID: one(customers, {
+      fields: [payload_locked_documents_rels.customersID],
+      references: [customers.id],
+      relationName: 'customers',
+    }),
+    addressesID: one(addresses, {
+      fields: [payload_locked_documents_rels.addressesID],
+      references: [addresses.id],
+      relationName: 'addresses',
+    }),
+    subscriptionsID: one(subscriptions, {
+      fields: [payload_locked_documents_rels.subscriptionsID],
+      references: [subscriptions.id],
+      relationName: 'subscriptions',
+    }),
+    ordersID: one(orders, {
+      fields: [payload_locked_documents_rels.ordersID],
+      references: [orders.id],
+      relationName: 'orders',
+    }),
+    'order-itemsID': one(order_items, {
+      fields: [payload_locked_documents_rels['order-itemsID']],
+      references: [order_items.id],
+      relationName: 'order-items',
+    }),
+    'cellar-entriesID': one(cellar_entries, {
+      fields: [payload_locked_documents_rels['cellar-entriesID']],
+      references: [cellar_entries.id],
+      relationName: 'cellar-entries',
+    }),
+    ratingsID: one(ratings, {
+      fields: [payload_locked_documents_rels.ratingsID],
+      references: [ratings.id],
+      relationName: 'ratings',
+    }),
+    'taste-signalsID': one(taste_signals, {
+      fields: [payload_locked_documents_rels['taste-signalsID']],
+      references: [taste_signals.id],
+      relationName: 'taste-signals',
+    }),
+    'journal-postsID': one(journal_posts, {
+      fields: [payload_locked_documents_rels['journal-postsID']],
+      references: [journal_posts.id],
+      relationName: 'journal-posts',
+    }),
+    pagesID: one(pages, {
+      fields: [payload_locked_documents_rels.pagesID],
+      references: [pages.id],
+      relationName: 'pages',
+    }),
+    giftsID: one(gifts, {
+      fields: [payload_locked_documents_rels.giftsID],
+      references: [gifts.id],
+      relationName: 'gifts',
+    }),
+    promotionsID: one(promotions, {
+      fields: [payload_locked_documents_rels.promotionsID],
+      references: [promotions.id],
+      relationName: 'promotions',
+    }),
+    'site-settingsID': one(site_settings, {
+      fields: [payload_locked_documents_rels['site-settingsID']],
+      references: [site_settings.id],
+      relationName: 'site-settings',
+    }),
+    'webhook-eventsID': one(webhook_events, {
+      fields: [payload_locked_documents_rels['webhook-eventsID']],
+      references: [webhook_events.id],
+      relationName: 'webhook-events',
+    }),
     mediaID: one(media, {
       fields: [payload_locked_documents_rels.mediaID],
       references: [media.id],
@@ -1059,6 +2446,11 @@ export const relations_payload_preferences_rels = relations(
       references: [payload_preferences.id],
       relationName: '_rels',
     }),
+    customersID: one(customers, {
+      fields: [payload_preferences_rels.customersID],
+      references: [customers.id],
+      relationName: 'customers',
+    }),
     usersID: one(users, {
       fields: [payload_preferences_rels.usersID],
       references: [users.id],
@@ -1077,10 +2469,26 @@ type DatabaseSchema = {
   enum_brands_currency: typeof enum_brands_currency
   enum_plans_cadence: typeof enum_plans_cadence
   enum_plans_currency: typeof enum_plans_currency
+  enum_wines_status: typeof enum_wines_status
   enum_wines_style: typeof enum_wines_style
   enum_wine_skus_currency: typeof enum_wine_skus_currency
+  enum_producers_status: typeof enum_producers_status
+  enum_regions_status: typeof enum_regions_status
   enum_grapes_colour: typeof enum_grapes_colour
-  enum_editions_release_state: typeof enum_editions_release_state
+  enum_editions_status: typeof enum_editions_status
+  enum_boxes_status: typeof enum_boxes_status
+  enum_inventory_movements_reason: typeof enum_inventory_movements_reason
+  enum_customers_status: typeof enum_customers_status
+  enum_subscriptions_status: typeof enum_subscriptions_status
+  enum_orders_status: typeof enum_orders_status
+  enum_orders_currency: typeof enum_orders_currency
+  enum_order_items_currency: typeof enum_order_items_currency
+  enum_taste_signals_category: typeof enum_taste_signals_category
+  enum_journal_posts_status: typeof enum_journal_posts_status
+  enum_pages_status: typeof enum_pages_status
+  enum_gifts_status: typeof enum_gifts_status
+  enum_webhook_events_provider: typeof enum_webhook_events_provider
+  enum_webhook_events_status: typeof enum_webhook_events_status
   enum_users_role: typeof enum_users_role
   brands_hostnames: typeof brands_hostnames
   brands: typeof brands
@@ -1094,9 +2502,28 @@ type DatabaseSchema = {
   regions: typeof regions
   grapes_aliases: typeof grapes_aliases
   grapes: typeof grapes
+  editions_story_chapters: typeof editions_story_chapters
   editions: typeof editions
+  editions_rels: typeof editions_rels
   boxes: typeof boxes
   boxes_rels: typeof boxes_rels
+  inventory_movements: typeof inventory_movements
+  customers_sessions: typeof customers_sessions
+  customers: typeof customers
+  addresses: typeof addresses
+  subscriptions: typeof subscriptions
+  orders: typeof orders
+  order_items: typeof order_items
+  cellar_entries: typeof cellar_entries
+  ratings: typeof ratings
+  taste_signals: typeof taste_signals
+  journal_posts: typeof journal_posts
+  pages: typeof pages
+  gifts: typeof gifts
+  promotions: typeof promotions
+  site_settings_shipping_countries: typeof site_settings_shipping_countries
+  site_settings: typeof site_settings
+  webhook_events: typeof webhook_events
   media: typeof media
   users_sessions: typeof users_sessions
   users: typeof users
@@ -1118,9 +2545,28 @@ type DatabaseSchema = {
   relations_regions: typeof relations_regions
   relations_grapes_aliases: typeof relations_grapes_aliases
   relations_grapes: typeof relations_grapes
+  relations_editions_story_chapters: typeof relations_editions_story_chapters
+  relations_editions_rels: typeof relations_editions_rels
   relations_editions: typeof relations_editions
   relations_boxes_rels: typeof relations_boxes_rels
   relations_boxes: typeof relations_boxes
+  relations_inventory_movements: typeof relations_inventory_movements
+  relations_customers_sessions: typeof relations_customers_sessions
+  relations_customers: typeof relations_customers
+  relations_addresses: typeof relations_addresses
+  relations_subscriptions: typeof relations_subscriptions
+  relations_orders: typeof relations_orders
+  relations_order_items: typeof relations_order_items
+  relations_cellar_entries: typeof relations_cellar_entries
+  relations_ratings: typeof relations_ratings
+  relations_taste_signals: typeof relations_taste_signals
+  relations_journal_posts: typeof relations_journal_posts
+  relations_pages: typeof relations_pages
+  relations_gifts: typeof relations_gifts
+  relations_promotions: typeof relations_promotions
+  relations_site_settings_shipping_countries: typeof relations_site_settings_shipping_countries
+  relations_site_settings: typeof relations_site_settings
+  relations_webhook_events: typeof relations_webhook_events
   relations_media: typeof relations_media
   relations_users_sessions: typeof relations_users_sessions
   relations_users: typeof relations_users

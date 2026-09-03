@@ -1,30 +1,56 @@
 import type { CollectionConfig } from 'payload'
-import { editorialAccess } from './access'
+import { activeOrAdmin, adminOnly, liveOrAdmin } from './access'
 
 export const Producers: CollectionConfig = {
   slug: 'producers',
-  access: editorialAccess,
+  access: { read: liveOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Wine atlas' },
   fields: [
     { name: 'brands', type: 'relationship', relationTo: 'brands', hasMany: true, required: true },
     { name: 'name', type: 'text', required: true },
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'draft',
+      index: true,
+      options: ['draft', 'scheduled', 'live', 'archived'],
+    },
+    { name: 'introduction', type: 'textarea' },
     { name: 'country', type: 'relationship', relationTo: 'countries', required: true },
     { name: 'region', type: 'relationship', relationTo: 'regions' },
     { name: 'portrait', type: 'upload', relationTo: 'media' },
     { name: 'story', type: 'richText' },
+    {
+      name: 'seo',
+      type: 'group',
+      fields: [
+        { name: 'title', type: 'text' },
+        { name: 'description', type: 'textarea', maxLength: 170 },
+      ],
+    },
   ],
 }
 
 /** Editorial wine identity. Pricing and bottle format belong to WineSKUs. */
 export const Wines: CollectionConfig = {
   slug: 'wines',
-  access: editorialAccess,
+  access: { read: liveOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Wine catalogue' },
   fields: [
     { name: 'brand', type: 'relationship', relationTo: 'brands', required: true, index: true },
     { name: 'name', type: 'text', required: true },
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'draft',
+      index: true,
+      options: ['draft', 'scheduled', 'live', 'archived'],
+    },
+    { name: 'introduction', type: 'textarea' },
     { name: 'producer', type: 'relationship', relationTo: 'producers', required: true },
     { name: 'country', type: 'relationship', relationTo: 'countries', required: true },
     { name: 'region', type: 'relationship', relationTo: 'regions', required: true },
@@ -44,10 +70,11 @@ export const Wines: CollectionConfig = {
 export const WineSKUs: CollectionConfig = {
   slug: 'wine-skus',
   labels: { singular: 'Wine SKU / Bottle', plural: 'Wine SKUs / Bottles' },
-  access: editorialAccess,
+  access: { read: activeOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'sku', group: 'Wine catalogue' },
   fields: [
     { name: 'wine', type: 'relationship', relationTo: 'wines', required: true, index: true },
+    { name: 'brand', type: 'relationship', relationTo: 'brands', required: true, index: true },
     { name: 'sku', type: 'text', required: true, unique: true, index: true },
     { name: 'bottleSizeMl', type: 'number', required: true, defaultValue: 750, min: 50 },
     {
@@ -65,6 +92,8 @@ export const WineSKUs: CollectionConfig = {
       options: ['EUR', 'GBP', 'USD'],
     },
     { name: 'active', type: 'checkbox', defaultValue: true },
+    { name: 'stockOnHand', type: 'number', defaultValue: 0, min: 0, required: true },
+    { name: 'stockReserved', type: 'number', defaultValue: 0, min: 0, required: true },
     {
       name: 'externalProductId',
       type: 'text',

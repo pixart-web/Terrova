@@ -1,0 +1,4 @@
+* text=auto
+
+# Payload/Drizzle emits SQL template literals with intentional tab indentation.
+apps/cms/src/migrations/*.ts -whitespace

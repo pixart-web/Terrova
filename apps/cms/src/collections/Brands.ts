@@ -1,18 +1,21 @@
 import type { CollectionConfig } from 'payload'
-import { editorialAccess } from './access'
+import { activeOrAdmin, adminOnly } from './access'
 
 export const Brands: CollectionConfig = {
   slug: 'brands',
-  access: editorialAccess,
+  access: { read: activeOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Multi-brand' },
   fields: [
     { name: 'name', type: 'text', required: true },
     { name: 'slug', type: 'text', required: true, unique: true, index: true },
+    { name: 'locale', type: 'text', required: true, defaultValue: 'en-GB' },
     {
       name: 'hostnames',
       type: 'array',
       fields: [{ name: 'hostname', type: 'text', required: true }],
     },
+    { name: 'supportEmail', type: 'email', required: true, defaultValue: 'hello@terrova.net' },
+    { name: 'active', type: 'checkbox', defaultValue: true, index: true },
     {
       name: 'currency',
       type: 'select',
