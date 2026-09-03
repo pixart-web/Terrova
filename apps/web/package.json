@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@terrova/commerce": "workspace:*",
     "@terrova/config": "workspace:*",
+    "@terrova/content": "workspace:*",
+    "@terrova/types": "workspace:*",
     "@terrova/ui": "workspace:*",
     "framer-motion": "13.1.1",
     "gsap": "3.15.0",

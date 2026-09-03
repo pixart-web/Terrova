@@ -7,7 +7,7 @@ import { SmoothScroll } from './smooth-scroll'
 import { TasteScene } from './taste/taste-scene'
 import { UnboxScene } from './unbox/unbox-scene'
 
-export function CinematicHomepage() {
+export function CinematicHomepage({ plans }: { plans: readonly SubscriptionPlan[] }) {
   return (
     <main id="main-content" className="cinematic-home">
       <SmoothScroll />
@@ -15,9 +15,10 @@ export function CinematicHomepage() {
       <UnboxScene />
       <OriginsScene />
       <ProcessScene />
-      <JourneyScene />
+      <JourneyScene plans={plans} />
       <TasteScene />
       <FinalCtaScene />
     </main>
   )
 }
+import type { SubscriptionPlan } from '@terrova/types'

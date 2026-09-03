@@ -2,6 +2,7 @@
   "name": "terrova",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=22.13.0"
@@ -15,6 +16,10 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm test:unit && pnpm test:functional",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "evidence:capture": "node scripts/capture-evidence.mjs",
     "test:functional": "node scripts/smoke-test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -23,9 +28,15 @@
     "db:logs": "docker compose logs -f postgres",
     "cms:generate:types": "pnpm --filter @terrova/cms generate:types",
     "cms:generate:schema": "pnpm --filter @terrova/cms generate:db-schema",
-    "cms:migrate:create": "pnpm --filter @terrova/cms migrate:create"
+    "cms:migrate:create": "pnpm --filter @terrova/cms migrate:create",
+    "cms:migrate": "pnpm --filter @terrova/cms migrate",
+    "cms:seed": "pnpm --filter @terrova/cms seed"
   },
   "devDependencies": {
-    "prettier": "3.9.6"
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "prettier": "3.9.6",
+    "tsx": "^4.23.13",
+    "vitest": "^4.1.11"
   }
 }

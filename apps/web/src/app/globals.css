@@ -2,6 +2,706 @@
   box-sizing: border-box;
 }
 
+/* Production application surfaces beyond the cinematic homepage. */
+.public-page,
+.account-entry,
+.account-shell,
+.auth-page,
+.status-page {
+  min-height: 100svh;
+  padding: clamp(8rem, 13vw, 12rem) var(--page-gutter) clamp(5rem, 10vw, 9rem);
+  background: var(--chalk);
+  color: var(--ink);
+}
+
+.page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.6fr);
+  gap: clamp(2rem, 8vw, 8rem);
+  min-height: min(46rem, 76svh);
+  align-items: end;
+  padding-bottom: clamp(4rem, 8vw, 8rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 75%);
+}
+
+.page-eyebrow,
+.section-heading > p,
+.account-feature > p,
+.account-grid article > p:first-child,
+.account-security > p:first-child {
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.page-hero .page-eyebrow {
+  grid-column: 1 / -1;
+  align-self: start;
+}
+
+.page-hero h1,
+.account-entry h1,
+.account-hero h1,
+.auth-page h1,
+.status-page h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 9.5vw, 9.5rem);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: -0.065em;
+}
+
+.page-hero h1 em {
+  color: var(--terracotta);
+  font-weight: 400;
+}
+
+.page-introduction {
+  max-width: 34rem;
+  margin: 0;
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
+  line-height: 1.65;
+}
+
+.section-heading {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-bottom: clamp(3rem, 7vw, 7rem);
+}
+
+.section-heading h2,
+.selected-plan h2,
+.edition-ledger h2,
+.gift-composition h2,
+.detail-story h2,
+.account-feature h2,
+.account-grid h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 6vw, 6rem);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+}
+
+.plan-ledger,
+.edition-ledger,
+.gift-composition,
+.detail-story,
+.related-ledger,
+.journal-index {
+  padding: clamp(5rem, 10vw, 10rem) 0;
+}
+
+.plan-index {
+  border-top: 1px solid color-mix(in srgb, var(--ink), transparent 72%);
+}
+
+.plan-index a {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.6rem 0;
+  color: inherit;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 72%);
+  text-decoration: none;
+  transition:
+    color 180ms ease,
+    padding 180ms ease;
+}
+
+.plan-index a strong {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 4.4rem);
+  font-weight: 400;
+}
+
+.plan-index a[aria-current='true'],
+.plan-index a:hover {
+  padding-left: 1rem;
+  color: var(--wine);
+}
+
+.selected-plan {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.9fr) minmax(20rem, 1.1fr);
+  gap: clamp(3rem, 10vw, 10rem);
+  align-items: center;
+  min-height: 42rem;
+  padding: clamp(4rem, 8vw, 8rem) 0;
+}
+
+.selected-plan > div > p:not(.selected-plan__price) {
+  max-width: 36rem;
+  line-height: 1.7;
+}
+
+.selected-plan__price {
+  margin: 2.5rem 0;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 6rem);
+}
+
+.selected-plan__price span {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.bottle-mark {
+  position: relative;
+  display: block;
+  width: min(14rem, 42vw);
+  height: 32rem;
+  margin: auto;
+  filter: drop-shadow(2rem 2.5rem 1.5rem rgb(23 23 20 / 22%));
+}
+
+.bottle-mark__neck,
+.bottle-mark__body {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #181b18, var(--bottle-tone, var(--wine)) 54%, #10110f);
+}
+
+.bottle-mark--vine {
+  --bottle-tone: var(--vine);
+}
+.bottle-mark--terracotta {
+  --bottle-tone: var(--terracotta);
+}
+.bottle-mark__neck {
+  top: 0;
+  width: 30%;
+  height: 24%;
+  border-radius: 0.2rem 0.2rem 0 0;
+}
+.bottle-mark__body {
+  bottom: 0;
+  width: 82%;
+  height: 78%;
+  border-radius: 42% 42% 12% 12% / 18% 18% 5% 5%;
+}
+.bottle-mark__body span {
+  position: absolute;
+  inset: 46% 7% auto;
+  padding: 1.8rem 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-display);
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.checkout-entry,
+.editorial-form {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.checkout-entry label,
+.editorial-form label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.checkout-entry input,
+.editorial-form input,
+.editorial-form select,
+.editorial-form textarea,
+.rating-form select {
+  width: 100%;
+  padding: 0.9rem 0;
+  color: inherit;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.checkout-entry button,
+.editorial-form button,
+.account-shell button,
+.status-page button,
+.consent-banner button,
+.compliance-dialog button,
+.button-link {
+  min-height: 3.25rem;
+  padding: 0.9rem 1.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: 600 0.68rem/1 var(--font-sans);
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.configuration-note,
+.notice,
+.legal-placeholder {
+  padding: 1rem 1.2rem;
+  border-left: 3px solid var(--terracotta);
+  background: color-mix(in srgb, var(--terracotta), transparent 90%);
+}
+
+.edition-ledger {
+  color: var(--cream);
+  background: var(--ink);
+  box-shadow: 0 0 0 100vmax var(--ink);
+  clip-path: inset(0 -100vmax);
+}
+
+.edition-ledger article {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem 3rem;
+  border-top: 1px solid rgb(243 239 228 / 28%);
+  padding: 2rem 0;
+}
+
+.edition-ledger article h3 {
+  margin: 0;
+  font: 400 clamp(2.5rem, 5vw, 5rem)/0.95 var(--font-display);
+}
+
+.edition-ledger article ul {
+  grid-column: 2;
+  padding: 0;
+  list-style: none;
+}
+.edition-ledger article li {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgb(243 239 228 / 18%);
+}
+.edition-ledger a {
+  color: inherit;
+}
+
+.editorial-ledger article,
+.journal-index article {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  gap: clamp(1rem, 4vw, 4rem);
+  padding: 2.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 75%);
+  align-items: baseline;
+}
+
+.editorial-ledger h2,
+.journal-index h2 {
+  margin: 0.5rem 0;
+  font: 400 clamp(2rem, 4vw, 4.5rem)/1 var(--font-display);
+}
+
+.editorial-ledger a,
+.journal-index a,
+.related-ledger a {
+  color: inherit;
+  text-decoration: none;
+}
+.journal-index article {
+  grid-template-columns: 11rem 4rem 1fr;
+}
+.journal-index article > p:last-child {
+  grid-column: 3;
+  max-width: 38rem;
+}
+
+.gift-composition,
+.wine-theatre,
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(3rem, 10vw, 10rem);
+}
+
+.gift-composition .editorial-form {
+  padding: 2rem;
+  border: 1px solid color-mix(in srgb, var(--ink), transparent 70%);
+}
+.check-field {
+  grid-template-columns: auto 1fr !important;
+  align-items: start;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.check-field input {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.detail-story {
+  max-width: 68rem;
+  margin-left: auto;
+}
+.detail-story > p:last-child {
+  max-width: 42rem;
+  line-height: 1.8;
+}
+.related-ledger {
+  border-top: 1px solid color-mix(in srgb, var(--ink), transparent 70%);
+}
+.related-ledger a {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 2rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 78%);
+}
+.wine-theatre {
+  min-height: 42rem;
+  align-items: center;
+  padding: 6rem 0;
+}
+.wine-theatre dl > div {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  padding: 1rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 75%);
+}
+.wine-theatre dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.wine-theatre dd {
+  margin: 0;
+  text-transform: capitalize;
+}
+.article-page article,
+.legal-page article {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: clamp(4rem, 8vw, 8rem) 0;
+  font-size: 1.1rem;
+  line-height: 1.85;
+}
+
+.account-entry > header {
+  max-width: 64rem;
+}
+.account-entry > header > p:last-child {
+  max-width: 36rem;
+  line-height: 1.7;
+}
+.account-entry__forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2rem, 8vw, 8rem);
+  margin-top: 6rem;
+}
+.editorial-form h2 {
+  margin: 0 0 1.5rem;
+  font: 400 clamp(2rem, 4vw, 4rem)/1 var(--font-display);
+}
+
+.account-shell {
+  padding-inline: 0;
+}
+.account-hero,
+.account-feature,
+.account-grid,
+.account-security {
+  padding-inline: var(--page-gutter);
+}
+.account-hero {
+  min-height: 72svh;
+  display: grid;
+  align-content: end;
+  gap: 2rem;
+  padding-bottom: 5rem;
+}
+.account-hero form {
+  position: absolute;
+  top: 8rem;
+  right: var(--page-gutter);
+}
+.text-button {
+  border: 0 !important;
+  min-height: 2.75rem !important;
+}
+.account-feature {
+  min-height: 60svh;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
+  align-content: center;
+  border-top: 1px solid color-mix(in srgb, var(--ink), transparent 75%);
+}
+.account-feature > p {
+  align-self: start;
+}
+.account-feature > h2,
+.account-feature > p:last-child,
+.account-feature > ol {
+  grid-column: 2;
+}
+.account-feature--paper {
+  background: var(--cream);
+}
+.account-grid {
+  padding-block: clamp(5rem, 9vw, 9rem);
+  border-top: 1px solid color-mix(in srgb, var(--ink), transparent 75%);
+}
+.account-grid article {
+  min-height: 30rem;
+}
+.account-list,
+.cellar-list,
+.signal-list {
+  padding: 0;
+  list-style: none;
+}
+.account-list li,
+.signal-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor, transparent 78%);
+}
+.cellar-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor, transparent 78%);
+}
+.cellar-list li div {
+  display: grid;
+  gap: 0.3rem;
+}
+.rating-form {
+  display: flex;
+  gap: 0.8rem;
+  align-items: end;
+}
+.editorial-form--compact {
+  margin-top: 2rem;
+}
+.account-security {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-block: 3rem;
+  color: var(--cream);
+  background: var(--ink);
+}
+.account-security a {
+  color: inherit;
+}
+
+.auth-page,
+.status-page {
+  display: grid;
+  align-content: center;
+  gap: 2rem;
+}
+.auth-page {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 30rem);
+}
+.auth-page .page-eyebrow {
+  grid-column: 1 / -1;
+}
+.status-page {
+  max-width: none;
+}
+.status-page > p {
+  max-width: 38rem;
+  line-height: 1.7;
+}
+
+.compliance-dialog {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  color: var(--cream);
+  background: rgb(23 23 20 / 96%);
+  backdrop-filter: blur(14px);
+}
+
+.compliance-dialog > div {
+  width: min(44rem, 100%);
+}
+.compliance-dialog h2 {
+  margin: 1rem 0 2rem;
+  font: 400 clamp(3.2rem, 8vw, 7rem)/0.9 var(--font-display);
+  letter-spacing: -0.04em;
+}
+.compliance-dialog p:not(.page-eyebrow) {
+  max-width: 32rem;
+  line-height: 1.7;
+}
+.compliance-dialog button {
+  display: block;
+  margin: 2rem 0 1rem;
+}
+.compliance-dialog a {
+  color: inherit;
+}
+
+.consent-banner {
+  position: fixed;
+  z-index: 900;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  color: var(--cream);
+  border: 1px solid rgb(243 239 228 / 30%);
+  background: var(--ink);
+  box-shadow: 0 1rem 4rem rgb(0 0 0 / 35%);
+}
+
+.consent-banner p {
+  margin: 0.2rem 0;
+}
+.consent-banner > div:last-child {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+.consent-banner a {
+  color: inherit;
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  grid-column: 1 / -1;
+}
+.site-footer nav a {
+  color: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:where(
+    .public-page,
+    .account-entry,
+    .account-shell,
+    .auth-page,
+    .status-page,
+    .compliance-dialog,
+    .consent-banner
+  )
+  :focus-visible {
+  outline: 3px solid var(--terracotta);
+  outline-offset: 4px;
+}
+
+@media (max-width: 800px) {
+  .public-page,
+  .account-entry,
+  .account-shell,
+  .auth-page,
+  .status-page {
+    padding-top: 7rem;
+  }
+  .page-hero {
+    grid-template-columns: 1fr;
+    min-height: 38rem;
+  }
+  .page-hero h1,
+  .account-entry h1,
+  .account-hero h1,
+  .auth-page h1,
+  .status-page h1 {
+    font-size: clamp(3.4rem, 16vw, 5.6rem);
+  }
+  .section-heading,
+  .selected-plan,
+  .gift-composition,
+  .wine-theatre,
+  .account-entry__forms,
+  .account-grid,
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+  .plan-index a {
+    grid-template-columns: 2.5rem 1fr auto;
+  }
+  .selected-plan {
+    min-height: auto;
+  }
+  .bottle-mark {
+    height: 25rem;
+  }
+  .edition-ledger article,
+  .editorial-ledger article,
+  .journal-index article {
+    grid-template-columns: 2.5rem 1fr;
+  }
+  .edition-ledger article > :not(:first-child),
+  .editorial-ledger article > :not(:first-child),
+  .journal-index article > :not(:first-child) {
+    grid-column: 2;
+  }
+  .journal-index article > p:first-child {
+    grid-column: 1 / -1;
+  }
+  .account-feature {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-block: 5rem;
+  }
+  .account-feature > h2,
+  .account-feature > p:last-child,
+  .account-feature > ol {
+    grid-column: 1;
+  }
+  .cellar-list li {
+    grid-template-columns: 1fr;
+  }
+  .rating-form {
+    align-items: center;
+  }
+  .account-security {
+    flex-direction: column;
+  }
+  .consent-banner {
+    grid-template-columns: 1fr;
+  }
+  .consent-banner > div:last-child {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-index a {
+    transition: none;
+  }
+  .compliance-dialog {
+    backdrop-filter: none;
+  }
+}
+
 html {
   background: var(--ink);
   scroll-behavior: auto;
@@ -150,6 +850,31 @@ summary:focus-visible {
   border-color: var(--cream);
   background: var(--cream);
   color: var(--ink);
+}
+
+.site-header[data-surface='light'] {
+  color: var(--ink);
+}
+
+.site-header[data-surface='light'] .desktop-navigation a,
+.site-header[data-surface='light'] .account-link {
+  color: color-mix(in srgb, var(--ink), transparent 28%);
+}
+
+.site-header[data-surface='light'] .desktop-navigation a:hover,
+.site-header[data-surface='light'] .account-link:hover {
+  color: var(--wine);
+}
+
+.site-header[data-surface='light'] .join-link {
+  border-color: color-mix(in srgb, var(--ink), transparent 68%);
+  background: transparent;
+}
+
+.site-header[data-surface='light'] .join-link:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--chalk);
 }
 
 .mobile-navigation {
@@ -2789,6 +3514,14 @@ summary:focus-visible {
     height: 1px;
     background: var(--cream);
     transition: transform 220ms var(--ease-out);
+  }
+
+  .site-header[data-surface='light'] .mobile-navigation:not([open]) summary {
+    border-color: color-mix(in srgb, var(--ink), transparent 68%);
+  }
+
+  .site-header[data-surface='light'] .mobile-navigation:not([open]) summary span {
+    background: var(--ink);
   }
 
   .mobile-navigation[open] summary span:first-child {

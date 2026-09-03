@@ -63,6 +63,7 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
+    customers: CustomerAuthOperations;
     users: UserAuthOperations;
   };
   blocks: {};
@@ -77,6 +78,21 @@ export interface Config {
     grapes: Grape;
     editions: Edition;
     boxes: Box;
+    'inventory-movements': InventoryMovement;
+    customers: Customer;
+    addresses: Address;
+    subscriptions: Subscription;
+    orders: Order;
+    'order-items': OrderItem;
+    'cellar-entries': CellarEntry;
+    ratings: Rating;
+    'taste-signals': TasteSignal;
+    'journal-posts': JournalPost;
+    pages: Page;
+    gifts: Gift;
+    promotions: Promotion;
+    'site-settings': SiteSetting;
+    'webhook-events': WebhookEvent;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -96,6 +112,21 @@ export interface Config {
     grapes: GrapesSelect<false> | GrapesSelect<true>;
     editions: EditionsSelect<false> | EditionsSelect<true>;
     boxes: BoxesSelect<false> | BoxesSelect<true>;
+    'inventory-movements': InventoryMovementsSelect<false> | InventoryMovementsSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
+    addresses: AddressesSelect<false> | AddressesSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    'order-items': OrderItemsSelect<false> | OrderItemsSelect<true>;
+    'cellar-entries': CellarEntriesSelect<false> | CellarEntriesSelect<true>;
+    ratings: RatingsSelect<false> | RatingsSelect<true>;
+    'taste-signals': TasteSignalsSelect<false> | TasteSignalsSelect<true>;
+    'journal-posts': JournalPostsSelect<false> | JournalPostsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    gifts: GiftsSelect<false> | GiftsSelect<true>;
+    promotions: PromotionsSelect<false> | PromotionsSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'webhook-events': WebhookEventsSelect<false> | WebhookEventsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -113,10 +144,28 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: Customer | User;
   jobs: {
     tasks: unknown;
     workflows: unknown;
+  };
+}
+export interface CustomerAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
   };
 }
 export interface UserAuthOperations {
@@ -145,12 +194,15 @@ export interface Brand {
   id: number;
   name: string;
   slug: string;
+  locale: string;
   hostnames?:
     | {
         hostname: string;
         id?: string | null;
       }[]
     | null;
+  supportEmail: string;
+  active?: boolean | null;
   currency: 'EUR' | 'GBP' | 'USD';
   theme: {
     ink: string;
@@ -171,12 +223,13 @@ export interface Plan {
   name: string;
   code: string;
   description?: string | null;
+  positioning: string;
+  mostPopular?: boolean | null;
   cadence: 'monthly' | 'bi_monthly' | 'quarterly';
-  bottlesPerBox: number;
   priceAmount: number;
   currency: 'EUR' | 'GBP' | 'USD';
   /**
-   * Reserved for Stripe; unused in this release.
+   * Stripe Price ID. Configure per environment; never invent live IDs.
    */
   externalPriceId?: string | null;
   active?: boolean | null;
@@ -192,6 +245,8 @@ export interface Wine {
   brand: number | Brand;
   name: string;
   slug: string;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
+  introduction?: string | null;
   producer: number | Producer;
   country: number | Country;
   region: number | Region;
@@ -226,6 +281,8 @@ export interface Producer {
   brands: (number | Brand)[];
   name: string;
   slug: string;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
+  introduction?: string | null;
   country: number | Country;
   region?: (number | null) | Region;
   portrait?: (number | null) | Media;
@@ -244,6 +301,10 @@ export interface Producer {
     };
     [k: string]: unknown;
   } | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -266,6 +327,7 @@ export interface Region {
   id: number;
   name: string;
   slug: string;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
   country: number | Country;
   story?: {
     root: {
@@ -295,6 +357,7 @@ export interface Media {
   alt: string;
   caption?: string | null;
   credit?: string | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -349,6 +412,7 @@ export interface Grape {
 export interface WineSkus {
   id: number;
   wine: number | Wine;
+  brand: number | Brand;
   sku: string;
   bottleSizeMl: number;
   /**
@@ -357,6 +421,8 @@ export interface WineSkus {
   priceAmount: number;
   currency: 'EUR' | 'GBP' | 'USD';
   active?: boolean | null;
+  stockOnHand: number;
+  stockReserved: number;
   /**
    * Reserved for the future commerce provider.
    */
@@ -376,10 +442,16 @@ export interface Edition {
   id: number;
   brand: number | Brand;
   title: string;
+  code: string;
   slug: string;
-  releaseState: 'draft' | 'preview' | 'live' | 'archived';
-  opensAt?: string | null;
-  closesAt?: string | null;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
+  /**
+   * Editorial period label.
+   */
+  period: string;
+  periodStart: string;
+  periodEnd: string;
+  publishAt?: string | null;
   region?: (number | null) | Region;
   hero?: (number | null) | Media;
   narrative?: {
@@ -397,6 +469,30 @@ export interface Edition {
     };
     [k: string]: unknown;
   } | null;
+  eligiblePlans: (number | Plan)[];
+  wineSKUs: (number | WineSkus)[];
+  storyChapters?:
+    | {
+        title: string;
+        body: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        media?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -410,8 +506,353 @@ export interface Box {
   edition: number | Edition;
   plan: number | Plan;
   name: string;
+  code: string;
+  status: 'draft' | 'ready' | 'packing' | 'closed' | 'archived';
   wineSKUs: (number | WineSkus)[];
   packingNote?: string | null;
+  packingDeadline?: string | null;
+  expectedShipAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inventory-movements".
+ */
+export interface InventoryMovement {
+  id: number;
+  reference: string;
+  brand: number | Brand;
+  sku: number | WineSkus;
+  order?: (number | null) | Order;
+  reason: 'receipt' | 'allocation' | 'release' | 'fulfilment' | 'adjustment' | 'damage' | 'return';
+  quantityDelta: number;
+  reservedDelta: number;
+  balanceAfter: number;
+  reservedBalanceAfter: number;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  code: string;
+  brand: number | Brand;
+  customer: number | Customer;
+  subscription?: (number | null) | Subscription;
+  edition?: (number | null) | Edition;
+  box?: (number | null) | Box;
+  shippingAddress?: (number | null) | Address;
+  status: 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  totalAmount: number;
+  currency: 'EUR' | 'GBP' | 'USD';
+  providerCheckoutId?: string | null;
+  providerInvoiceId?: string | null;
+  paidAt?: string | null;
+  shippedAt?: string | null;
+  trackingReference?: string | null;
+  operatorNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: number;
+  brand: number | Brand;
+  name: string;
+  status: 'pending_verification' | 'active' | 'disabled';
+  /**
+   * Stripe Customer reference; server-side only.
+   */
+  externalCustomerId?: string | null;
+  marketingConsent?: boolean | null;
+  termsAcceptedAt: string;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'customers';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: number;
+  code: string;
+  brand: number | Brand;
+  customer: number | Customer;
+  plan: number | Plan;
+  status: 'pending' | 'active' | 'paused' | 'payment_issue' | 'cancelled';
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean | null;
+  providerSubscriptionId?: string | null;
+  providerCustomerId?: string | null;
+  lastProviderEventAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addresses".
+ */
+export interface Address {
+  id: number;
+  customer: number | Customer;
+  brand: number | Brand;
+  label: string;
+  recipientName: string;
+  line1: string;
+  line2?: string | null;
+  city: string;
+  postalCode: string;
+  countryCode: string;
+  isDefault?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-items".
+ */
+export interface OrderItem {
+  id: number;
+  order: number | Order;
+  customer: number | Customer;
+  brand: number | Brand;
+  wineSKU?: (number | null) | WineSkus;
+  description: string;
+  quantity: number;
+  unitAmount: number;
+  currency: 'EUR' | 'GBP' | 'USD';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cellar-entries".
+ */
+export interface CellarEntry {
+  id: number;
+  customer: number | Customer;
+  brand: number | Brand;
+  wine: number | Wine;
+  wineSKU?: (number | null) | WineSkus;
+  order: number | Order;
+  experiencedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings".
+ */
+export interface Rating {
+  id: number;
+  customer: number | Customer;
+  brand: number | Brand;
+  wine: number | Wine;
+  cellarEntry?: (number | null) | CellarEntry;
+  score: number;
+  wouldDrinkAgain?: boolean | null;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "taste-signals".
+ */
+export interface TasteSignal {
+  id: number;
+  customer: number | Customer;
+  brand: number | Brand;
+  category: 'grape' | 'region' | 'country' | 'style';
+  key: string;
+  label: string;
+  score: number;
+  observations: number;
+  calculatedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "journal-posts".
+ */
+export interface JournalPost {
+  id: number;
+  brand: number | Brand;
+  title: string;
+  slug: string;
+  excerpt: string;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  hero?: (number | null) | Media;
+  authorName?: string | null;
+  publishedAt?: string | null;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
+  publishAt?: string | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  brand: number | Brand;
+  title: string;
+  slug: string;
+  eyebrow?: string | null;
+  introduction?: string | null;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
+  publishAt?: string | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gifts".
+ */
+export interface Gift {
+  id: number;
+  code: string;
+  brand: number | Brand;
+  customer?: (number | null) | Customer;
+  plan: number | Plan;
+  purchaserEmail: string;
+  recipientName: string;
+  recipientEmail: string;
+  message?: string | null;
+  startsAt?: string | null;
+  status: 'draft' | 'checkout_pending' | 'purchased' | 'notified' | 'redeemed' | 'cancelled';
+  providerCheckoutId?: string | null;
+  redemptionTokenHash?: string | null;
+  redeemedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promotions".
+ */
+export interface Promotion {
+  id: number;
+  brand: number | Brand;
+  name: string;
+  code: string;
+  providerPromotionCodeId?: string | null;
+  active?: boolean | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  usageLimit?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  brand: number | Brand;
+  siteName: string;
+  siteUrl: string;
+  defaultTitle: string;
+  defaultDescription: string;
+  supportEmail: string;
+  ageGateEnabled?: boolean | null;
+  minimumAge: number;
+  shippingCountries: {
+    countryCode: string;
+    label: string;
+    id?: string | null;
+  }[];
+  termsReviewedAt?: string | null;
+  privacyReviewedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events".
+ */
+export interface WebhookEvent {
+  id: number;
+  provider: 'stripe';
+  providerEventId: string;
+  eventType: string;
+  livemode: boolean;
+  status: 'processing' | 'processed' | 'failed' | 'ignored';
+  receivedAt: string;
+  processedAt?: string | null;
+  attempts: number;
+  errorCode?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -507,6 +948,66 @@ export interface PayloadLockedDocument {
         value: number | Box;
       } | null)
     | ({
+        relationTo: 'inventory-movements';
+        value: number | InventoryMovement;
+      } | null)
+    | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null)
+    | ({
+        relationTo: 'addresses';
+        value: number | Address;
+      } | null)
+    | ({
+        relationTo: 'subscriptions';
+        value: number | Subscription;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'order-items';
+        value: number | OrderItem;
+      } | null)
+    | ({
+        relationTo: 'cellar-entries';
+        value: number | CellarEntry;
+      } | null)
+    | ({
+        relationTo: 'ratings';
+        value: number | Rating;
+      } | null)
+    | ({
+        relationTo: 'taste-signals';
+        value: number | TasteSignal;
+      } | null)
+    | ({
+        relationTo: 'journal-posts';
+        value: number | JournalPost;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'gifts';
+        value: number | Gift;
+      } | null)
+    | ({
+        relationTo: 'promotions';
+        value: number | Promotion;
+      } | null)
+    | ({
+        relationTo: 'site-settings';
+        value: number | SiteSetting;
+      } | null)
+    | ({
+        relationTo: 'webhook-events';
+        value: number | WebhookEvent;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -515,10 +1016,15 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'customers';
+        value: number | Customer;
+      }
+    | {
+        relationTo: 'users';
+        value: number | User;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -528,10 +1034,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'customers';
+        value: number | Customer;
+      }
+    | {
+        relationTo: 'users';
+        value: number | User;
+      };
   key?: string | null;
   value?:
     | {
@@ -563,12 +1074,15 @@ export interface PayloadMigration {
 export interface BrandsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  locale?: T;
   hostnames?:
     | T
     | {
         hostname?: T;
         id?: T;
       };
+  supportEmail?: T;
+  active?: T;
   currency?: T;
   theme?:
     | T
@@ -590,8 +1104,9 @@ export interface PlansSelect<T extends boolean = true> {
   name?: T;
   code?: T;
   description?: T;
+  positioning?: T;
+  mostPopular?: T;
   cadence?: T;
-  bottlesPerBox?: T;
   priceAmount?: T;
   currency?: T;
   externalPriceId?: T;
@@ -607,6 +1122,8 @@ export interface WinesSelect<T extends boolean = true> {
   brand?: T;
   name?: T;
   slug?: T;
+  status?: T;
+  introduction?: T;
   producer?: T;
   country?: T;
   region?: T;
@@ -624,11 +1141,14 @@ export interface WinesSelect<T extends boolean = true> {
  */
 export interface WineSkusSelect<T extends boolean = true> {
   wine?: T;
+  brand?: T;
   sku?: T;
   bottleSizeMl?: T;
   priceAmount?: T;
   currency?: T;
   active?: T;
+  stockOnHand?: T;
+  stockReserved?: T;
   externalProductId?: T;
   externalPriceId?: T;
   updatedAt?: T;
@@ -642,10 +1162,18 @@ export interface ProducersSelect<T extends boolean = true> {
   brands?: T;
   name?: T;
   slug?: T;
+  status?: T;
+  introduction?: T;
   country?: T;
   region?: T;
   portrait?: T;
   story?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -666,6 +1194,7 @@ export interface CountriesSelect<T extends boolean = true> {
 export interface RegionsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  status?: T;
   country?: T;
   story?: T;
   hero?: T;
@@ -695,13 +1224,26 @@ export interface GrapesSelect<T extends boolean = true> {
 export interface EditionsSelect<T extends boolean = true> {
   brand?: T;
   title?: T;
+  code?: T;
   slug?: T;
-  releaseState?: T;
-  opensAt?: T;
-  closesAt?: T;
+  status?: T;
+  period?: T;
+  periodStart?: T;
+  periodEnd?: T;
+  publishAt?: T;
   region?: T;
   hero?: T;
   narrative?: T;
+  eligiblePlans?: T;
+  wineSKUs?: T;
+  storyChapters?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        media?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -714,8 +1256,311 @@ export interface BoxesSelect<T extends boolean = true> {
   edition?: T;
   plan?: T;
   name?: T;
+  code?: T;
+  status?: T;
   wineSKUs?: T;
   packingNote?: T;
+  packingDeadline?: T;
+  expectedShipAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inventory-movements_select".
+ */
+export interface InventoryMovementsSelect<T extends boolean = true> {
+  reference?: T;
+  brand?: T;
+  sku?: T;
+  order?: T;
+  reason?: T;
+  quantityDelta?: T;
+  reservedDelta?: T;
+  balanceAfter?: T;
+  reservedBalanceAfter?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  brand?: T;
+  name?: T;
+  status?: T;
+  externalCustomerId?: T;
+  marketingConsent?: T;
+  termsAcceptedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  _verified?: T;
+  _verificationToken?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addresses_select".
+ */
+export interface AddressesSelect<T extends boolean = true> {
+  customer?: T;
+  brand?: T;
+  label?: T;
+  recipientName?: T;
+  line1?: T;
+  line2?: T;
+  city?: T;
+  postalCode?: T;
+  countryCode?: T;
+  isDefault?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  code?: T;
+  brand?: T;
+  customer?: T;
+  plan?: T;
+  status?: T;
+  currentPeriodStart?: T;
+  currentPeriodEnd?: T;
+  cancelAtPeriodEnd?: T;
+  providerSubscriptionId?: T;
+  providerCustomerId?: T;
+  lastProviderEventAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  code?: T;
+  brand?: T;
+  customer?: T;
+  subscription?: T;
+  edition?: T;
+  box?: T;
+  shippingAddress?: T;
+  status?: T;
+  totalAmount?: T;
+  currency?: T;
+  providerCheckoutId?: T;
+  providerInvoiceId?: T;
+  paidAt?: T;
+  shippedAt?: T;
+  trackingReference?: T;
+  operatorNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-items_select".
+ */
+export interface OrderItemsSelect<T extends boolean = true> {
+  order?: T;
+  customer?: T;
+  brand?: T;
+  wineSKU?: T;
+  description?: T;
+  quantity?: T;
+  unitAmount?: T;
+  currency?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cellar-entries_select".
+ */
+export interface CellarEntriesSelect<T extends boolean = true> {
+  customer?: T;
+  brand?: T;
+  wine?: T;
+  wineSKU?: T;
+  order?: T;
+  experiencedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings_select".
+ */
+export interface RatingsSelect<T extends boolean = true> {
+  customer?: T;
+  brand?: T;
+  wine?: T;
+  cellarEntry?: T;
+  score?: T;
+  wouldDrinkAgain?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "taste-signals_select".
+ */
+export interface TasteSignalsSelect<T extends boolean = true> {
+  customer?: T;
+  brand?: T;
+  category?: T;
+  key?: T;
+  label?: T;
+  score?: T;
+  observations?: T;
+  calculatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "journal-posts_select".
+ */
+export interface JournalPostsSelect<T extends boolean = true> {
+  brand?: T;
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  body?: T;
+  hero?: T;
+  authorName?: T;
+  publishedAt?: T;
+  status?: T;
+  publishAt?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  brand?: T;
+  title?: T;
+  slug?: T;
+  eyebrow?: T;
+  introduction?: T;
+  body?: T;
+  status?: T;
+  publishAt?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gifts_select".
+ */
+export interface GiftsSelect<T extends boolean = true> {
+  code?: T;
+  brand?: T;
+  customer?: T;
+  plan?: T;
+  purchaserEmail?: T;
+  recipientName?: T;
+  recipientEmail?: T;
+  message?: T;
+  startsAt?: T;
+  status?: T;
+  providerCheckoutId?: T;
+  redemptionTokenHash?: T;
+  redeemedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "promotions_select".
+ */
+export interface PromotionsSelect<T extends boolean = true> {
+  brand?: T;
+  name?: T;
+  code?: T;
+  providerPromotionCodeId?: T;
+  active?: T;
+  startsAt?: T;
+  endsAt?: T;
+  usageLimit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  brand?: T;
+  siteName?: T;
+  siteUrl?: T;
+  defaultTitle?: T;
+  defaultDescription?: T;
+  supportEmail?: T;
+  ageGateEnabled?: T;
+  minimumAge?: T;
+  shippingCountries?:
+    | T
+    | {
+        countryCode?: T;
+        label?: T;
+        id?: T;
+      };
+  termsReviewedAt?: T;
+  privacyReviewedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events_select".
+ */
+export interface WebhookEventsSelect<T extends boolean = true> {
+  provider?: T;
+  providerEventId?: T;
+  eventType?: T;
+  livemode?: T;
+  status?: T;
+  receivedAt?: T;
+  processedAt?: T;
+  attempts?: T;
+  errorCode?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -727,6 +1572,7 @@ export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
   credit?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
