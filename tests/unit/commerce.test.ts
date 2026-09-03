@@ -52,7 +52,7 @@ describe('commerce boundaries', () => {
     ).not.toThrow()
   })
 
-  it('prevents old or same-second events and terminal cancellation from regressing state', () => {
+  it('prevents old events and terminal cancellation from regressing state', () => {
     expect(
       providerStateDecision({
         lastProviderEventAt: '2026-09-03T10:00:00.000Z',
@@ -61,6 +61,47 @@ describe('commerce boundaries', () => {
         incomingStatus: 'active',
       }),
     ).toBe('stale')
+    expect(
+      providerStateDecision({
+        lastProviderEventAt: '2026-09-03T10:00:00.000Z',
+        currentStatus: 'cancelled',
+        providerEventAt: '2026-09-03T10:00:01.000Z',
+        incomingStatus: 'active',
+      }),
+    ).toBe('timestamp-only')
+  })
+
+  it('applies same-second subscription.updated then subscription.deleted deterministically', () => {
+    expect(
+      providerStateDecision({
+        lastProviderEventAt: '2026-09-03T10:00:00.000Z',
+        currentStatus: 'active',
+        providerEventAt: '2026-09-03T10:00:00.000Z',
+        incomingStatus: 'cancelled',
+      }),
+    ).toBe('apply')
+  })
+
+  it('keeps cancellation when same-second subscription events arrive in reverse order', () => {
+    expect(
+      providerStateDecision({
+        lastProviderEventAt: '2026-09-03T10:00:00.000Z',
+        currentStatus: 'cancelled',
+        providerEventAt: '2026-09-03T10:00:00.000Z',
+        incomingStatus: 'active',
+      }),
+    ).toBe('stale')
+  })
+
+  it('uses conservative precedence for same-second invoice and subscription states', () => {
+    expect(
+      providerStateDecision({
+        lastProviderEventAt: '2026-09-03T10:00:00.000Z',
+        currentStatus: 'active',
+        providerEventAt: '2026-09-03T10:00:00.000Z',
+        incomingStatus: 'payment_issue',
+      }),
+    ).toBe('apply')
     expect(
       providerStateDecision({
         lastProviderEventAt: '2026-09-03T10:00:00.000Z',
@@ -73,10 +114,10 @@ describe('commerce boundaries', () => {
       providerStateDecision({
         lastProviderEventAt: '2026-09-03T10:00:00.000Z',
         currentStatus: 'cancelled',
-        providerEventAt: '2026-09-03T10:00:01.000Z',
-        incomingStatus: 'active',
+        providerEventAt: '2026-09-03T10:00:00.000Z',
+        incomingStatus: 'payment_issue',
       }),
-    ).toBe('timestamp-only')
+    ).toBe('stale')
   })
 
   it('does not let late invoice.paid reactivate a cancelled subscription', async () => {

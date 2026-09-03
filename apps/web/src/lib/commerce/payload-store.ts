@@ -8,6 +8,14 @@ type Document = Record<string, unknown> & { id: EntityID }
 
 export type ProviderStateDecision = 'apply' | 'stale' | 'timestamp-only'
 
+const equalTimestampPrecedence: Record<string, number> = {
+  active: 0,
+  pending: 1,
+  paused: 2,
+  payment_issue: 3,
+  cancelled: 4,
+}
+
 export function providerStateDecision(input: {
   lastProviderEventAt?: unknown
   currentStatus?: unknown
@@ -19,9 +27,14 @@ export function providerStateDecision(input: {
   const previous = input.lastProviderEventAt
     ? Date.parse(String(input.lastProviderEventAt))
     : Number.NEGATIVE_INFINITY
-  if (Number.isFinite(previous) && incoming <= previous) return 'stale'
+  if (Number.isFinite(previous) && incoming < previous) return 'stale'
   if (String(input.currentStatus) === 'cancelled' && input.incomingStatus !== 'cancelled') {
-    return 'timestamp-only'
+    return incoming > previous ? 'timestamp-only' : 'stale'
+  }
+  if (Number.isFinite(previous) && incoming === previous) {
+    const currentPrecedence = equalTimestampPrecedence[String(input.currentStatus)] ?? -1
+    const incomingPrecedence = equalTimestampPrecedence[input.incomingStatus] ?? -1
+    return incomingPrecedence > currentPrecedence ? 'apply' : 'stale'
   }
   return 'apply'
 }

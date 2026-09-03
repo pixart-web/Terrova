@@ -14,6 +14,13 @@ Required event families are `checkout.session.completed`, `customer.subscription
 
 The success URL communicates receipt only; Stripe webhooks establish billing truth. Customer cancellation/payment-method management stays in Stripe Portal.
 
+Stripe event timestamps have one-second resolution and are not treated as a total order. Older
+events are ignored; for equal timestamps the local read model uses conservative financial-state
+precedence (`cancelled` > `payment_issue` > `paused` > `pending` > `active`). This makes terminal
+cancellation dominant in either delivery order and prevents same-second invoice events from
+reactivating or otherwise weakening a more restrictive state. Provider event IDs remain the
+idempotency key.
+
 ## Gifts
 
 The public flow records a validated Gift intent linked to a Plan and optional purchaser customer. It does not initiate payment, generate a redemption secret or email the recipient. Before enabling purchase, product owners must approve duration, activation timing, recipient eligibility, renewal behavior, refunds and tax treatment. Implementation must then reuse CommerceGateway and hash one-time redemption tokens.
