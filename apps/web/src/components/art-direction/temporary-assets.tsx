@@ -17,7 +17,7 @@ export function IndividualBottle({
       <span className="asset-bottle__neck" />
       <span className="asset-bottle__foil" />
       <span className="asset-bottle__label">
-        <i>Terrova</i>
+        <i aria-hidden="true" />
         <small>{edition}</small>
       </span>
       <span className="asset-bottle__shine" />

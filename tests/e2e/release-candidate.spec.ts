@@ -27,6 +27,35 @@ test('cinematic homepage preserves the seven-scene journey', async ({ page }) =>
     'href',
     '/boxes?plan=drinker',
   )
+  for (const region of ['Douro', 'Alentejo', 'Vinho Verde', 'Dão', 'Bairrada']) {
+    await expect(page.getByRole('heading', { name: new RegExp(region, 'i') })).toBeAttached()
+  }
+  await expect(page.locator('body')).not.toContainText(/Loire|Etna|Priorat|Quinta da Pellada/)
+})
+
+test('public discovery surfaces preserve the surprise', async ({ page }) => {
+  await page.goto('/producers')
+  for (const grape of [
+    'Touriga Nacional',
+    'Alvarinho',
+    'Arinto',
+    'Baga',
+    'Aragonez / Tinta Roriz',
+  ]) {
+    await expect(page.getByRole('heading', { name: grape, exact: true })).toBeAttached()
+  }
+  await expect(page.locator('body')).not.toContainText(/Encruzado|Quinta da Pellada|Primus Branco/)
+
+  await page.goto('/boxes')
+  await expect(page.getByText(/sealed Portuguese wine discovery/i)).toBeVisible()
+  await expect(page.locator('body')).not.toContainText(
+    /Quinta da Pellada|Primus Branco|Tinto da Serra/,
+  )
+
+  for (const route of ['/producers/quinta-da-pellada', '/wines/primus-branco']) {
+    const response = await page.goto(route)
+    expect(response?.status()).toBe(404)
+  }
 })
 
 test('subscription checkout requires auth, preserves the plan and associates the provider customer', async ({
@@ -122,7 +151,7 @@ test('legal and editorial routes have real, indexable shells', async ({ page }) 
 })
 
 test('critical public surfaces have no automated WCAG A/AA violations', async ({ page }) => {
-  for (const route of ['/', '/boxes?plan=drinker', '/account']) {
+  for (const route of ['/', '/boxes?plan=drinker', '/producers', '/account']) {
     await page.goto(route)
     const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
     expect(

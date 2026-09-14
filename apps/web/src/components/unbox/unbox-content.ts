@@ -13,8 +13,8 @@ export const unboxNarrative: UnboxNarrative = {
   eyebrow: 'Unbox',
   title: 'A new discovery, every month.',
   supportingCopy:
-    'We search beyond familiar labels to assemble a changing selection of wines worth discovering.',
-  edition: 'Edition 01 / Atlantic edge',
+    'We curate Portuguese wines beyond familiar labels. The bottles and their makers are revealed only as you unbox them.',
+  edition: 'Edition 01 / Portuguese discovery',
   bottleEditions: ['Bottle 01', 'Bottle 02', 'Bottle 03'],
-  variationNote: 'Three bottles. One changing point of view.',
+  variationNote: 'A sealed selection. One changing point of view.',
 }

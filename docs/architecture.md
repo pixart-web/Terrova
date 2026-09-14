@@ -42,7 +42,7 @@ See [data model](data-model.md) for collection ownership and lifecycle details.
 
 ## Content and publication
 
-Public catalogue, plan, edition, journal, legal and site-setting reads come from Payload. Only `live`, `ready` or `active` records are exposed according to collection semantics. In-memory fixtures are development-only and are structurally impossible in a production build. Homepage art direction remains code-owned to preserve its approved seven-scene choreography; its product plan values are CMS-driven.
+Public region, grape, plan, edition, box, journal, legal and site-setting reads come from Payload. Producer, Wine and WineSKU records remain operational and are never exposed to anonymous clients: authenticated customers encounter those identities only through their fulfilled Cellar. Public Box and Edition responses omit WineSKU relationships so future contents remain a surprise. Only `live`, `ready` or `active` records are exposed according to collection semantics. In-memory fixtures are development-only and are structurally impossible in a production build. Homepage art direction remains code-owned to preserve its approved seven-scene choreography; its product plan values are CMS-driven.
 
 Scene sequence is fixed: Discover, Unbox, Origins, Process, Choose Your Journey, Your Taste and Final CTA. Reduced motion keeps the complete narrative but removes pinning/parallax. Mobile uses an editorial linear flow.
 

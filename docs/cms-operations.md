@@ -8,12 +8,14 @@
 
 ## Publishing an edition
 
-1. Confirm Country, Region, Grapes and Producer are live.
+1. Confirm the Portuguese Country, Region and Grape editorial records are live.
 2. Create each Wine editorial record, then its distinct WineSKU bottle record.
 3. Record stock receipts through InventoryMovements; never edit balances as an operational shortcut.
 4. Create an Edition with period, plans, WineSKUs and narrative; publish it live.
 5. Create one Box per eligible Plan, verify packing note/deadlines and move it to ready.
-6. Preview `/boxes`, producer/wine pages and mobile layouts before promotion.
+6. Preview `/boxes`, `/producers` (the public Origins index) and mobile layouts before promotion. Confirm that no producer, commercial label, Wine or WineSKU identity is disclosed.
+
+Producer, Wine and WineSKU records are operational source data, not a public catalogue. They may be completed in Studio before fulfilment, but must remain behind authenticated/service access. Public Edition and Box copy should describe the discovery without naming their contents; customers see bottle and producer identities only in their fulfilled Cellar.
 
 ## Fulfilment
 
@@ -31,4 +33,4 @@ Journal and Page documents are draft-first. Legal pages are real CMS entries, bu
 
 ## Seed and migrations
 
-`pnpm cms:seed` creates missing reference/demo records and preserves existing data. Production execution requires `ALLOW_PRODUCTION_SEED=true` and should be a one-off operator action. `pnpm cms:migrate` applies committed migrations. Take a verified backup before every production migration.
+`pnpm cms:seed` upserts the approved five Portuguese regions and five native grapes, updates Terrova's public surprise-box copy and preserves operational records. Production execution requires `ALLOW_PRODUCTION_SEED=true` and should be a one-off operator action. `pnpm cms:migrate` applies committed migrations. Take a verified backup before every production migration.

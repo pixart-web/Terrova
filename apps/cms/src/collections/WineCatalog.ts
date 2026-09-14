@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
-import { activeOrAdmin, adminOnly, liveOrAdmin } from './access'
+import { adminOnly } from './access'
 
 export const Producers: CollectionConfig = {
   slug: 'producers',
-  access: { read: liveOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
+  access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Wine atlas' },
   fields: [
     { name: 'brands', type: 'relationship', relationTo: 'brands', hasMany: true, required: true },
@@ -36,7 +36,7 @@ export const Producers: CollectionConfig = {
 /** Editorial wine identity. Pricing and bottle format belong to WineSKUs. */
 export const Wines: CollectionConfig = {
   slug: 'wines',
-  access: { read: liveOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
+  access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Wine catalogue' },
   fields: [
     { name: 'brand', type: 'relationship', relationTo: 'brands', required: true, index: true },
@@ -70,7 +70,7 @@ export const Wines: CollectionConfig = {
 export const WineSKUs: CollectionConfig = {
   slug: 'wine-skus',
   labels: { singular: 'Wine SKU / Bottle', plural: 'Wine SKUs / Bottles' },
-  access: { read: activeOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
+  access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'sku', group: 'Wine catalogue' },
   fields: [
     { name: 'wine', type: 'relationship', relationTo: 'wines', required: true, index: true },

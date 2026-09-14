@@ -29,8 +29,6 @@ const publicRoutes = [
   '/',
   '/boxes',
   '/producers',
-  '/producers/quinta-da-pellada',
-  '/wines/primus-branco',
   '/journal',
   '/journal/reading-a-landscape',
   '/gifts',
@@ -41,9 +39,6 @@ const publicRoutes = [
 const publicCollections = [
   'brands',
   'plans',
-  'wines',
-  'wine-skus',
-  'producers',
   'countries',
   'regions',
   'grapes',
@@ -56,6 +51,9 @@ const publicCollections = [
 ]
 
 const privateCollections = [
+  'wines',
+  'wine-skus',
+  'producers',
   'users',
   'customers',
   'addresses',
@@ -104,7 +102,7 @@ assert.match(
 assert.match(homepageHTML, /A new discovery, every month\./i, 'Unbox core heading is missing')
 assert.match(
   homepageHTML,
-  /We search beyond familiar labels/i,
+  /We curate Portuguese wines beyond familiar labels/i,
   'Unbox supporting narrative is missing',
 )
 assert.match(homepageHTML, /Every bottle begins somewhere\./i, 'Origins core heading is missing')
@@ -131,18 +129,14 @@ assert.match(
   'Final CTA heading is missing',
 )
 
-for (const origin of [
-  'Douro',
-  'Portugal',
-  'Loire',
-  'France',
-  'Etna',
-  'Italy',
-  'Priorat',
-  'Spain',
-]) {
+for (const origin of ['Douro', 'Alentejo', 'Vinho Verde', 'Dão', 'Bairrada', 'Portugal']) {
   assert.match(homepageHTML, new RegExp(origin, 'i'), `Origin narrative missing: ${origin}`)
 }
+assert.doesNotMatch(
+  homepageHTML,
+  /Loire|Etna|Priorat|France|Italy|Spain|Quinta da Pellada|Primus Branco|Tinto da Serra/i,
+  'International placeholders or commercial wine identities leaked into the homepage',
+)
 
 for (const scene of [
   'unbox',
@@ -160,19 +154,23 @@ for (const scene of [
 }
 
 for (const signal of [
-  'Volcanic energy',
+  'Atlantic tension',
   'Atlantic edges',
-  'Touriga Franca',
+  'Touriga Nacional',
   'Mineral · savoury · bright',
 ]) {
   assert.match(homepageHTML, new RegExp(signal, 'i'), `Taste signal missing: ${signal}`)
 }
 
 const orderedProcessSteps = ['We search', 'We curate', 'We deliver', 'You taste']
+const processHTML = homepageHTML.slice(
+  homepageHTML.indexOf('data-motion-scene="process"'),
+  homepageHTML.indexOf('data-motion-scene="choose-your-journey"'),
+)
 let previousProcessStepPosition = -1
 
 for (const step of orderedProcessSteps) {
-  const position = homepageHTML.indexOf(step)
+  const position = processHTML.indexOf(step, previousProcessStepPosition + 1)
   assert.ok(position > previousProcessStepPosition, `Process step order is incorrect at ${step}`)
   previousProcessStepPosition = position
 }
@@ -251,6 +249,41 @@ for (const route of publicRoutes) {
   )
 }
 
+for (const route of ['/producers/quinta-da-pellada', '/wines/primus-branco']) {
+  const response = await fetch(`${webURL}${route}`)
+  assert.equal(response.status, 404, `Legacy catalogue route must remain private: ${route}`)
+}
+
+const originsHTML = await (await fetch(`${webURL}/producers`)).text()
+for (const value of [
+  'Douro',
+  'Alentejo',
+  'Vinho Verde',
+  'Dão',
+  'Bairrada',
+  'Touriga Nacional',
+  'Alvarinho',
+  'Arinto',
+  'Baga',
+  'Aragonez',
+  'Tinta Roriz',
+]) {
+  assert.match(originsHTML, new RegExp(value, 'i'), `Portuguese origin content missing: ${value}`)
+}
+assert.doesNotMatch(
+  originsHTML,
+  /Encruzado|Quinta da Pellada|Primus Branco|Tinto da Serra/i,
+  'Private catalogue content leaked into the Origins index',
+)
+
+const boxesHTML = await (await fetch(`${webURL}/boxes`)).text()
+assert.match(boxesHTML, /sealed Portuguese wine discovery/i, 'Surprise-box promise is missing')
+assert.doesNotMatch(
+  boxesHTML,
+  /Quinta da Pellada|Primus Branco|Tinto da Serra/i,
+  'Future producer or wine identity leaked into the boxes page',
+)
+
 await waitFor(`${cmsURL}/api/brands?limit=1`, 'Payload API')
 
 for (const collection of publicCollections) {
@@ -273,6 +306,15 @@ for (const collection of privateCollections) {
     )
   }
 }
+
+const anonymousBoxesResponse = await fetch(`${cmsURL}/api/boxes?depth=3&limit=10`)
+assert.equal(anonymousBoxesResponse.status, 200, 'Anonymous boxes read failed')
+const anonymousBoxes = await anonymousBoxesResponse.text()
+assert.doesNotMatch(
+  anonymousBoxes,
+  /wineSKUs|Quinta da Pellada|Primus Branco|Tinto da Serra|TER-PRI|TER-SER/i,
+  'Anonymous Payload box response exposed future catalogue contents',
+)
 
 // Direct Payload API authorization regression checks. These deliberately bypass Next.js routes.
 const login = await cmsRequest('/api/customers/login', {

@@ -4,10 +4,10 @@ import type {
   EntityID,
   EditorialPageContent,
   JournalEntry,
-  ProducerSummary,
+  GrapeVarietySummary,
   SiteSettings,
   SubscriptionPlan,
-  WineIdentity,
+  WineRegionSummary,
 } from '@terrova/types'
 
 export interface BrandContext {
@@ -20,10 +20,8 @@ export interface ContentRepository {
   listPlans(brandId: EntityID): Promise<SubscriptionPlan[]>
   getPlan(brandId: EntityID, code: string): Promise<SubscriptionPlan | null>
   listPublishedBoxes(brandId: EntityID): Promise<BoxSummary[]>
-  listPublishedProducers(brandId: EntityID): Promise<ProducerSummary[]>
-  getPublishedProducer(brandId: EntityID, slug: string): Promise<ProducerSummary | null>
-  listPublishedWines(brandId: EntityID): Promise<WineIdentity[]>
-  getPublishedWine(brandId: EntityID, slug: string): Promise<WineIdentity | null>
+  listPublishedRegions(): Promise<WineRegionSummary[]>
+  listPublishedGrapes(): Promise<GrapeVarietySummary[]>
   listPublishedJournalEntries(brandId: EntityID): Promise<JournalEntry[]>
   getPublishedJournalEntry(brandId: EntityID, slug: string): Promise<JournalEntry | null>
   listPublishedPages(brandId: EntityID): Promise<EditorialPageContent[]>

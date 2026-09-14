@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const navigation = [
   ['Boxes', '/boxes'],
-  ['Producers', '/producers'],
+  ['Origins', '/producers'],
   ['Journal', '/journal'],
   ['Gifts', '/gifts'],
   ['Account', '/account'],

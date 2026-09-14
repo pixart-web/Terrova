@@ -7,9 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteURL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://terrova.net'
   const { brand } = await contentRepository.resolveBrand()
-  const [producers, wines, journal, pages] = await Promise.all([
-    contentRepository.listPublishedProducers(brand.id),
-    contentRepository.listPublishedWines(brand.id),
+  const [journal, pages] = await Promise.all([
     contentRepository.listPublishedJournalEntries(brand.id),
     contentRepository.listPublishedPages(brand.id),
   ])
@@ -25,8 +23,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     path('/producers', 0.8),
     path('/journal', 0.8),
     path('/gifts', 0.7),
-    ...producers.map((item) => path(`/producers/${item.slug}`, 0.7)),
-    ...wines.map((item) => path(`/wines/${item.slug}`, 0.7)),
     ...journal.map((item) => path(`/journal/${item.slug}`, 0.7)),
     ...pages.map((item) => path(`/legal/${item.slug}`, 0.3)),
   ]

@@ -1,8 +1,4 @@
-import {
-  IndividualBottle,
-  OriginLandscape,
-  ProducerImageSlot,
-} from '../art-direction/temporary-assets'
+import { IndividualBottle, OriginLandscape } from '../art-direction/temporary-assets'
 import { originJourney } from './origins-content'
 import { OriginsMotionBoundary } from './origins-motion-boundary'
 
@@ -17,15 +13,16 @@ export function OriginsScene() {
         </div>
 
         <header className="origins-intro" data-origins-intro>
-          <p className="scene-kicker">03 — Origins / Four coordinates</p>
+          <p className="scene-kicker">03 — Origins / Five Portuguese regions</p>
           <h2 id="origins-title">Every bottle begins somewhere.</h2>
           <p>
-            From one monthly edition, follow the land, hands and decisions held inside the glass.
+            Follow five landscapes that shape Portuguese wine. The bottles and their makers remain a
+            surprise until your box is opened.
           </p>
         </header>
 
         <div className="origins-bottle-anchor" data-origins-bottle aria-hidden="true">
-          <IndividualBottle edition="Edition 01" tone="vine" />
+          <IndividualBottle edition="Anonymous bottle" tone="vine" />
         </div>
 
         <div className="origins-editorial-track">
@@ -44,19 +41,14 @@ export function OriginsScene() {
                 <h3>
                   {origin.region}, <em>{origin.country}</em>
                 </h3>
-                <blockquote>{origin.editorialLine}</blockquote>
+                <blockquote>{origin.tagline}</blockquote>
                 <dl>
                   <div>
-                    <dt>Producer</dt>
-                    <dd>{origin.producer}</dd>
-                  </div>
-                  <div>
-                    <dt>Place notes</dt>
-                    <dd>{origin.context}</dd>
+                    <dt>Region notes</dt>
+                    <dd>{origin.description}</dd>
                   </div>
                 </dl>
               </div>
-              <ProducerImageSlot initials={origin.producerInitials} />
             </article>
           ))}
         </div>

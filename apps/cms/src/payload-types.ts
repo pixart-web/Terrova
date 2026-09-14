@@ -329,6 +329,8 @@ export interface Region {
   slug: string;
   status: 'draft' | 'scheduled' | 'live' | 'archived';
   country: number | Country;
+  tagline: string;
+  shortDescription: string;
   story?: {
     root: {
       type: string;
@@ -401,7 +403,10 @@ export interface Grape {
         id?: string | null;
       }[]
     | null;
+  status: 'draft' | 'scheduled' | 'live' | 'archived';
   colour?: ('red' | 'white' | 'pink' | 'grey') | null;
+  tagline: string;
+  shortDescription: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -1196,6 +1201,8 @@ export interface RegionsSelect<T extends boolean = true> {
   slug?: T;
   status?: T;
   country?: T;
+  tagline?: T;
+  shortDescription?: T;
   story?: T;
   hero?: T;
   updatedAt?: T;
@@ -1213,7 +1220,10 @@ export interface GrapesSelect<T extends boolean = true> {
         name?: T;
         id?: T;
       };
+  status?: T;
   colour?: T;
+  tagline?: T;
+  shortDescription?: T;
   updatedAt?: T;
   createdAt?: T;
 }

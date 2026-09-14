@@ -6,7 +6,7 @@ export function ProcessVisual() {
     <div className="process-visual" aria-hidden="true">
       <span className="process-visual__path" data-process-path />
       <div className="process-visual__bottle" data-process-bottle>
-        <IndividualBottle edition="Edition 01" tone="vine" />
+        <IndividualBottle edition="Revealed on opening" tone="vine" />
       </div>
       <div className="process-visual__box">
         <TerrovaBox edition="Monthly edition" state="open" />

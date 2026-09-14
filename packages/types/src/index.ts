@@ -25,6 +25,23 @@ export interface MediaAsset {
   height?: number
 }
 
+export interface WineRegionSummary {
+  id: EntityID
+  slug: string
+  name: string
+  tagline: string
+  description: string
+}
+
+export interface GrapeVarietySummary {
+  id: EntityID
+  name: string
+  aliases: string[]
+  type: 'red' | 'white' | 'pink' | 'grey'
+  tagline: string
+  description: string
+}
+
 export interface ProducerSummary {
   id: EntityID
   slug: string
@@ -103,7 +120,6 @@ export interface BoxSummary {
   name: string
   edition: EditionSummary
   planCode: string
-  wines: WineIdentity[]
 }
 
 export interface JournalEntry {

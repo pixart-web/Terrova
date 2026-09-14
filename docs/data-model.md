@@ -2,23 +2,24 @@
 
 ## Ownership
 
-| Domain     | Collections                                            |                 Public read | Write authority                            |
-| ---------- | ------------------------------------------------------ | --------------------------: | ------------------------------------------ |
-| Tenant     | Brands, SiteSettings                                   |      active/configured data | Studio/service                             |
-| Catalogue  | Countries, Regions, Grapes, Producers, Wines, WineSKUs |            live/active data | Studio/service                             |
-| Membership | Plans, Editions, Boxes                                 |      active/live/ready data | Studio/service                             |
-| Customer   | Customers, Addresses                                   |                  owner only | owner with protected fields; service/admin |
-| Commerce   | Subscriptions, Orders, OrderItems, Gifts, Promotions   | owner only where applicable | service/admin                              |
-| Operations | InventoryMovements                                     |                          no | service/admin; immutable after creation    |
-| Taste      | CellarEntries, Ratings, TasteSignals                   |                  owner only | constrained customer/service/admin         |
-| Editorial  | JournalPosts, Pages, Media                             |                   live data | Studio/service                             |
-| System     | WebhookEvents                                          |                          no | service/admin; never deleted through API   |
+| Domain     | Collections                                          |                            Public read | Write authority                            |
+| ---------- | ---------------------------------------------------- | -------------------------------------: | ------------------------------------------ |
+| Tenant     | Brands, SiteSettings                                 |                 active/configured data | Studio/service                             |
+| Origins    | Countries, Regions, Grapes                           |                              live data | Studio/service                             |
+| Catalogue  | Producers, Wines, WineSKUs                           | no anonymous read; Cellar context only | Studio/service                             |
+| Membership | Plans, Editions, Boxes                               |                 active/live/ready data | Studio/service                             |
+| Customer   | Customers, Addresses                                 |                             owner only | owner with protected fields; service/admin |
+| Commerce   | Subscriptions, Orders, OrderItems, Gifts, Promotions |            owner only where applicable | service/admin                              |
+| Operations | InventoryMovements                                   |                                     no | service/admin; immutable after creation    |
+| Taste      | CellarEntries, Ratings, TasteSignals                 |                             owner only | constrained customer/service/admin         |
+| Editorial  | JournalPosts, Pages, Media                           |                              live data | Studio/service                             |
+| System     | WebhookEvents                                        |                                     no | service/admin; never deleted through API   |
 
 Relationships use PostgreSQL numeric IDs. `Brand` is required on tenant-owned aggregate roots. A later brand must receive its own hostnames, settings, plans and content; no Terrova slug or colour is required by the domain interfaces.
 
 ## Wine and inventory
 
-`Wines` describe origin, producer, grapes, vintage, style and story. `WineSKUs` describe bottle size, price, provider references and stock. `InventoryMovements` are immutable audit entries with on-hand and reserved deltas plus post-movement balances. The hook rejects overselling and negative reservation balances.
+`Wines` describe origin, producer, grapes, vintage, style and story. `WineSKUs` describe bottle size, price, provider references and stock. Both remain distinct operational entities, while public Box and Edition responses suppress their WineSKU relationships to preserve the surprise. An authenticated customer can encounter these records only through an owned fulfilled Cellar entry. `InventoryMovements` are immutable audit entries with on-hand and reserved deltas plus post-movement balances. The hook rejects overselling and negative reservation balances.
 
 ## Order lifecycle
 
