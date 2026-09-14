@@ -27,6 +27,8 @@ export const Regions: CollectionConfig = {
       options: ['draft', 'scheduled', 'live', 'archived'],
     },
     { name: 'country', type: 'relationship', relationTo: 'countries', required: true },
+    { name: 'tagline', type: 'text', required: true },
+    { name: 'shortDescription', type: 'textarea', required: true, maxLength: 280 },
     { name: 'story', type: 'richText' },
     { name: 'hero', type: 'upload', relationTo: 'media' },
   ],
@@ -34,11 +36,21 @@ export const Regions: CollectionConfig = {
 
 export const Grapes: CollectionConfig = {
   slug: 'grapes',
-  access: { read: publicRead, create: adminOnly, update: adminOnly, delete: adminOnly },
+  access: { read: liveOrAdmin, create: adminOnly, update: adminOnly, delete: adminOnly },
   admin: { useAsTitle: 'name', group: 'Wine atlas' },
   fields: [
     { name: 'name', type: 'text', required: true, unique: true },
     { name: 'aliases', type: 'array', fields: [{ name: 'name', type: 'text', required: true }] },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'draft',
+      index: true,
+      options: ['draft', 'scheduled', 'live', 'archived'],
+    },
     { name: 'colour', type: 'select', options: ['red', 'white', 'pink', 'grey'] },
+    { name: 'tagline', type: 'text', required: true },
+    { name: 'shortDescription', type: 'textarea', required: true, maxLength: 280 },
   ],
 }

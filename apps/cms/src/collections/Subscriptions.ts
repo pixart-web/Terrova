@@ -1,5 +1,8 @@
-import type { CollectionConfig } from 'payload'
-import { activeOrAdmin, adminOnly, liveOrAdmin, readyOrAdmin } from './access'
+import type { CollectionConfig, FieldAccess } from 'payload'
+import { activeOrAdmin, adminOnly, isAdminOrService, liveOrAdmin, readyOrAdmin } from './access'
+
+const internalOrCustomerField: FieldAccess = ({ req }) =>
+  isAdminOrService(req) || req.user?.collection === 'customers'
 
 export const Plans: CollectionConfig = {
   slug: 'plans',
@@ -79,6 +82,7 @@ export const Editions: CollectionConfig = {
       hasMany: true,
       required: true,
       minRows: 1,
+      access: { read: internalOrCustomerField },
     },
     {
       name: 'storyChapters',
@@ -117,9 +121,10 @@ export const Boxes: CollectionConfig = {
       hasMany: true,
       required: true,
       minRows: 1,
+      access: { read: internalOrCustomerField },
     },
-    { name: 'packingNote', type: 'textarea' },
-    { name: 'packingDeadline', type: 'date' },
-    { name: 'expectedShipAt', type: 'date' },
+    { name: 'packingNote', type: 'textarea', access: { read: internalOrCustomerField } },
+    { name: 'packingDeadline', type: 'date', access: { read: internalOrCustomerField } },
+    { name: 'expectedShipAt', type: 'date', access: { read: internalOrCustomerField } },
   ],
 }

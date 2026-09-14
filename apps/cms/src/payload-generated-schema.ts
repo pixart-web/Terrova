@@ -56,6 +56,12 @@ export const enum_regions_status = pgEnum('enum_regions_status', [
   'live',
   'archived',
 ])
+export const enum_grapes_status = pgEnum('enum_grapes_status', [
+  'draft',
+  'scheduled',
+  'live',
+  'archived',
+])
 export const enum_grapes_colour = pgEnum('enum_grapes_colour', ['red', 'white', 'pink', 'grey'])
 export const enum_editions_status = pgEnum('enum_editions_status', [
   'draft',
@@ -438,6 +444,8 @@ export const regions = pgTable(
       .references(() => countries.id, {
         onDelete: 'set null',
       }),
+    tagline: varchar('tagline').notNull(),
+    shortDescription: varchar('short_description').notNull(),
     story: jsonb('story'),
     hero: integer('hero_id').references(() => media.id, {
       onDelete: 'set null',
@@ -483,7 +491,10 @@ export const grapes = pgTable(
   {
     id: serial('id').primaryKey(),
     name: varchar('name').notNull(),
+    status: enum_grapes_status('status').notNull().default('draft'),
     colour: enum_grapes_colour('colour'),
+    tagline: varchar('tagline').notNull(),
+    shortDescription: varchar('short_description').notNull(),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -493,6 +504,7 @@ export const grapes = pgTable(
   },
   (columns) => [
     uniqueIndex('grapes_name_idx').on(columns.name),
+    index('grapes_status_idx').on(columns.status),
     index('grapes_updated_at_idx').on(columns.updatedAt),
     index('grapes_created_at_idx').on(columns.createdAt),
   ],
@@ -2474,6 +2486,7 @@ type DatabaseSchema = {
   enum_wine_skus_currency: typeof enum_wine_skus_currency
   enum_producers_status: typeof enum_producers_status
   enum_regions_status: typeof enum_regions_status
+  enum_grapes_status: typeof enum_grapes_status
   enum_grapes_colour: typeof enum_grapes_colour
   enum_editions_status: typeof enum_editions_status
   enum_boxes_status: typeof enum_boxes_status

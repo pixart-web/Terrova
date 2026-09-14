@@ -5,10 +5,8 @@ export interface OriginNarrative {
   region: string
   country: string
   coordinates: string
-  producer: string
-  producerInitials: string
-  context: string
-  editorialLine: string
+  tagline: string
+  description: string
   tone: BottleTone
 }
 
@@ -18,43 +16,49 @@ export const originJourney: readonly OriginNarrative[] = [
     region: 'Douro',
     country: 'Portugal',
     coordinates: '41.16° N / 7.79° W',
-    producer: 'Quinta da Serra Alta',
-    producerInitials: 'SA',
-    context: 'Schist terraces / field blend / high altitude',
-    editorialLine: 'Stone, heat and a river that redraws the horizon.',
+    tagline: 'Steep terraces. Ancient vines. Unmistakable character.',
+    description:
+      'Carved by the Douro River, this dramatic landscape of schist slopes creates wines with depth, structure and a powerful sense of place.',
     tone: 'terracotta',
   },
   {
-    id: 'loire',
-    region: 'Loire',
-    country: 'France',
-    coordinates: '47.38° N / 0.69° E',
-    producer: 'Atelier des Rives',
-    producerInitials: 'AR',
-    context: 'Tuffeau limestone / old vines / cool river air',
-    editorialLine: 'A quiet tension held between chalk and water.',
+    id: 'alentejo',
+    region: 'Alentejo',
+    country: 'Portugal',
+    coordinates: '38.02° N / 7.86° W',
+    tagline: 'Wide horizons. Warm days. Generous wines.',
+    description:
+      'Across sunlit plains and ancient soils, the Alentejo produces expressive wines shaped by Mediterranean warmth, altitude and remarkable local diversity.',
     tone: 'chalk',
   },
   {
-    id: 'etna',
-    region: 'Etna',
-    country: 'Italy',
-    coordinates: '37.75° N / 14.99° E',
-    producer: 'Vigna del Cratere',
-    producerInitials: 'VC',
-    context: 'Volcanic sand / Nerello / north slope',
-    editorialLine: 'Altitude, ash and red fruit drawn with a fine line.',
+    id: 'vinho-verde',
+    region: 'Vinho Verde',
+    country: 'Portugal',
+    coordinates: '41.69° N / 8.83° W',
+    tagline: 'Green landscapes shaped by the Atlantic.',
+    description:
+      "Portugal's northwest is a land of freshness and vibrant native grapes, where cool Atlantic influence gives the wines energy, fragrance and natural acidity.",
     tone: 'wine',
   },
   {
-    id: 'priorat',
-    region: 'Priorat',
-    country: 'Spain',
-    coordinates: '41.14° N / 0.82° E',
-    producer: 'Celler de la Llicorella',
-    producerInitials: 'CL',
-    context: 'Llicorella slate / dry farming / steep parcels',
-    editorialLine: 'A dark mineral landscape with light at its edges.',
+    id: 'dao',
+    region: 'Dão',
+    country: 'Portugal',
+    coordinates: '40.60° N / 7.90° W',
+    tagline: 'Mountain vineyards. Granite soils. Quiet elegance.',
+    description:
+      'Protected by surrounding mountains, the Dão is known for freshness, balance and refined wines shaped by altitude, granite and slow ripening.',
     tone: 'vine',
+  },
+  {
+    id: 'bairrada',
+    region: 'Bairrada',
+    country: 'Portugal',
+    coordinates: '40.43° N / 8.46° W',
+    tagline: 'Atlantic air. Limestone soils. Wines built on freshness.',
+    description:
+      'Between the mountains and the ocean, Bairrada combines cool maritime influence with distinctive native grapes and a long tradition of age-worthy wines and sparkling wine.',
+    tone: 'terracotta',
   },
 ] as const

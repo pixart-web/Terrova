@@ -29,7 +29,7 @@ This matched-anchor strategy avoids cross-component element ownership, layout re
 
 ### Full
 
-Landscape viewports at 1024px and above use the complete scroll narrative. Discover stays sticky for its product reveal. Unbox uses a longer pinned 2.5D sequence for the box lid, interior and staggered bottles. Origins uses a pinned editorial stage where four typed records replace one another while the selected bottle and landscape layers move at independent restrained rates. Process pins one shared composition while four semantic list entries replace one another. Choose Your Journey pins one shared plan stage; plan changes are explicit UI interactions rather than scroll-controlled purchasing decisions. Your Taste progressively accumulates four signals, their traces and a Wine Profile resolution. Final CTA uses a shorter, decisive closing timeline.
+Landscape viewports at 1024px and above use the complete scroll narrative. Discover stays sticky for its product reveal. Unbox uses a longer pinned 2.5D sequence for the box lid, interior and staggered bottles. Origins uses a pinned editorial stage where five Portuguese region records replace one another while the anonymous bottle and landscape layers move at independent restrained rates. Process pins one shared composition while four semantic list entries replace one another. Choose Your Journey pins one shared plan stage; plan changes are explicit UI interactions rather than scroll-controlled purchasing decisions. Your Taste progressively accumulates four signals, their traces and a Wine Profile resolution. Final CTA uses a shorter, decisive closing timeline.
 
 ### Reduced
 
@@ -41,7 +41,7 @@ When `prefers-reduced-motion: reduce` is active, Lenis and scene timelines do no
 
 ## Content boundary prepared for Payload
 
-Scene mechanics do not import CMS types. `UnboxNarrative` contains the edition-level copy and bottle labels. `OriginNarrative` contains stable identifiers, place/country, coordinates, producer metadata, editorial copy and an art-direction tone. `ProcessStep` keeps the four-act sequence data-driven. `PlanPresentation` describes only editorial plan content and numeric money; it deliberately excludes bottle counts and payment-provider identifiers. `TasteSignal` models optional place/grape/style context, coarse sentiment and display weight without pretending that ratings, persistence or recommendation logic exists. These demo records can be replaced by adapters without changing timeline selectors or scene markup.
+Scene mechanics do not import CMS types. `UnboxNarrative` contains non-identifying edition copy and anonymous bottle positions. `OriginNarrative` contains stable identifiers, Portuguese place/country, coordinates, editorial copy and an art-direction tone; it contains no producer or commercial wine identity. `ProcessStep` keeps the four-act sequence data-driven. `PlanPresentation` describes only editorial plan content and numeric money; it deliberately excludes bottle counts and payment-provider identifiers. `TasteSignal` models optional place/grape/style context, coarse sentiment and display weight without pretending that ratings, persistence or recommendation logic exists. These demo records can be replaced by adapters without changing timeline selectors or scene markup.
 
 ## Performance and accessibility
 

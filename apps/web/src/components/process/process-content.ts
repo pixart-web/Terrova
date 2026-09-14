@@ -10,7 +10,8 @@ export const processNarrative = {
   index: '04',
   eyebrow: 'Process',
   title: 'We find. We curate. You discover.',
-  supportingLine: 'From vineyard to doorstep, every edition is built around discovery.',
+  supportingLine:
+    'From Portuguese vineyards to your doorstep, every edition protects the surprise.',
 } as const
 
 export const processSteps: readonly ProcessStep[] = [
@@ -19,7 +20,7 @@ export const processSteps: readonly ProcessStep[] = [
     index: '01',
     verb: 'We search',
     title: 'Beyond the obvious.',
-    description: 'We follow growers, regions and bottles that reward curiosity, not familiarity.',
+    description: 'We follow Portuguese regions and native grapes that reward curiosity.',
   },
   {
     id: 'curate',
@@ -35,7 +36,7 @@ export const processSteps: readonly ProcessStep[] = [
     verb: 'We deliver',
     title: 'Discovery, at your door.',
     description:
-      'The edition arrives ready to open, pour and share — with its story close at hand.',
+      'The sealed edition arrives ready to open, with each producer revealed inside the box.',
   },
   {
     id: 'taste',

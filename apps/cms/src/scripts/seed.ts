@@ -88,37 +88,118 @@ async function main() {
       })
     ).id
 
-  let regionID = await findID('regions', 'slug', 'dao')
-  if (!regionID)
-    regionID = (
-      await payload.create({
-        collection: 'regions',
-        overrideAccess: true,
-        data: {
-          name: 'Dão',
-          slug: 'dao',
-          status: 'live',
-          country: countryID,
-          story: richText(
-            'Granite, altitude and patient farming give the Dão its quiet, architectural wines.',
-          ),
-        },
-      })
-    ).id
+  const regionSeeds = [
+    {
+      name: 'Douro',
+      slug: 'douro',
+      tagline: 'Steep terraces. Ancient vines. Unmistakable character.',
+      description:
+        'Carved by the Douro River, this dramatic landscape of schist slopes creates wines with depth, structure and a powerful sense of place.',
+    },
+    {
+      name: 'Alentejo',
+      slug: 'alentejo',
+      tagline: 'Wide horizons. Warm days. Generous wines.',
+      description:
+        'Across sunlit plains and ancient soils, the Alentejo produces expressive wines shaped by Mediterranean warmth, altitude and remarkable local diversity.',
+    },
+    {
+      name: 'Vinho Verde',
+      slug: 'vinho-verde',
+      tagline: 'Green landscapes shaped by the Atlantic.',
+      description:
+        "Portugal's northwest is a land of freshness and vibrant native grapes, where cool Atlantic influence gives the wines energy, fragrance and natural acidity.",
+    },
+    {
+      name: 'Dão',
+      slug: 'dao',
+      tagline: 'Mountain vineyards. Granite soils. Quiet elegance.',
+      description:
+        'Protected by surrounding mountains, the Dão is known for freshness, balance and refined wines shaped by altitude, granite and slow ripening.',
+    },
+    {
+      name: 'Bairrada',
+      slug: 'bairrada',
+      tagline: 'Atlantic air. Limestone soils. Wines built on freshness.',
+      description:
+        'Between the mountains and the ocean, Bairrada combines cool maritime influence with distinctive native grapes and a long tradition of age-worthy wines and sparkling wine.',
+    },
+  ] as const
+  const regionIDs = new Map<string, SeedID>()
+  for (const region of regionSeeds) {
+    const id = await findID('regions', 'slug', region.slug)
+    const data = {
+      name: region.name,
+      slug: region.slug,
+      status: 'live' as const,
+      country: countryID,
+      tagline: region.tagline,
+      shortDescription: region.description,
+      story: richText(region.description),
+    }
+    const doc = id
+      ? await payload.update({ collection: 'regions', id, overrideAccess: true, data })
+      : await payload.create({ collection: 'regions', overrideAccess: true, data })
+    regionIDs.set(region.slug, doc.id)
+  }
 
-  const grapeNames = ['Encruzado', 'Touriga Nacional'] as const
-  const grapeIDs: SeedID[] = []
-  for (const name of grapeNames) {
-    let id = await findID('grapes', 'name', name)
-    if (!id)
-      id = (
-        await payload.create({
-          collection: 'grapes',
-          overrideAccess: true,
-          data: { name, colour: name === 'Encruzado' ? 'white' : 'red' },
-        })
-      ).id
-    grapeIDs.push(id)
+  const grapeSeeds = [
+    {
+      name: 'Touriga Nacional',
+      aliases: [] as { name: string }[],
+      colour: 'red' as const,
+      tagline: 'Floral, structured and unmistakably Portuguese.',
+      description:
+        "One of Portugal's iconic native grapes, combining dark fruit, floral aromas, freshness and remarkable ageing potential.",
+    },
+    {
+      name: 'Alvarinho',
+      aliases: [] as { name: string }[],
+      colour: 'white' as const,
+      tagline: 'Fragrant, precise and full of Atlantic freshness.',
+      description:
+        'A vibrant northern variety known for citrus, stone fruit and floral aromas, balanced by striking acidity and concentration.',
+    },
+    {
+      name: 'Arinto',
+      aliases: [] as { name: string }[],
+      colour: 'white' as const,
+      tagline: 'Freshness with a distinctly Portuguese edge.',
+      description:
+        'Known for its vibrant acidity and citrus character, Arinto thrives across Portugal and remains remarkably fresh even in warmer regions.',
+    },
+    {
+      name: 'Baga',
+      aliases: [] as { name: string }[],
+      colour: 'red' as const,
+      tagline: 'Character, tension and remarkable longevity.',
+      description:
+        'The signature red grape of Bairrada, producing structured wines with vivid acidity, firm tannins and impressive ability to evolve with age.',
+    },
+    {
+      name: 'Aragonez',
+      aliases: [{ name: 'Tinta Roriz' }],
+      colour: 'red' as const,
+      tagline: 'Ripe fruit, spice and many regional identities.',
+      description:
+        'Known by different names across Portugal, this versatile variety brings fruit, structure and spice to wines from north to south.',
+    },
+  ] as const
+  const grapeIDs = new Map<string, SeedID>()
+  for (const grape of grapeSeeds) {
+    const id = await findID('grapes', 'name', grape.name)
+    const data = {
+      name: grape.name,
+      aliases: [...grape.aliases],
+      status: 'live' as const,
+      colour: grape.colour,
+      tagline: grape.tagline,
+      shortDescription: grape.description,
+    }
+    const doc = id
+      ? await payload.update({ collection: 'grapes', id, overrideAccess: true, data })
+      : await payload.create({ collection: 'grapes', overrideAccess: true, data })
+    grapeIDs.set(grape.name, doc.id)
   }
 
   const plans = [
@@ -146,26 +227,27 @@ async function main() {
   ] as const
   const planIDs = new Map<string, SeedID>()
   for (const plan of plans) {
-    let id = await findID('plans', 'code', plan.code)
-    if (!id)
-      id = (
-        await payload.create({
+    const id = await findID('plans', 'code', plan.code)
+    const data = {
+      ...plan,
+      brand: brandID,
+      cadence: 'monthly' as const,
+      currency: 'EUR' as const,
+      active: true,
+      description: 'A monthly surprise box of Portuguese wines, revealed only when it reaches you.',
+    }
+    const doc = id
+      ? await payload.update({ collection: 'plans', id, overrideAccess: true, data })
+      : await payload.create({
           collection: 'plans',
           overrideAccess: true,
           data: {
-            ...plan,
-            brand: brandID,
-            cadence: 'monthly',
-            currency: 'EUR',
-            active: true,
+            ...data,
             externalPriceId:
               process.env.NODE_ENV === 'production' ? undefined : `price_test_terrova_${plan.code}`,
-            description:
-              'A monthly edition selected around place, season and the people behind each bottle.',
           },
         })
-      ).id
-    planIDs.set(plan.code, id)
+    planIDs.set(plan.code, doc.id)
   }
 
   let producerID = await findID('producers', 'slug', 'quinta-da-pellada')
@@ -182,7 +264,7 @@ async function main() {
           introduction:
             'A family estate reading the granitic slopes of the Dão with clarity and restraint.',
           country: countryID,
-          region: regionID,
+          region: regionIDs.get('dao')!,
           story: richText(
             'The work begins with old parcels, mixed exposures and a belief that precision should never erase origin.',
           ),
@@ -196,7 +278,7 @@ async function main() {
       slug: 'primus-branco',
       vintage: 2023,
       style: 'white' as const,
-      grape: grapeIDs[0],
+      grape: grapeIDs.get('Arinto')!,
       sku: 'TER-PRI-23-750',
       amount: 2800,
     },
@@ -205,7 +287,7 @@ async function main() {
       slug: 'tinto-da-serra',
       vintage: 2021,
       style: 'red' as const,
-      grape: grapeIDs[1],
+      grape: grapeIDs.get('Touriga Nacional')!,
       sku: 'TER-SER-21-750',
       amount: 3200,
     },
@@ -227,7 +309,7 @@ async function main() {
             introduction: 'A composed, site-led wine selected for the Terrova table.',
             producer: producerID,
             country: countryID,
-            region: regionID,
+            region: regionIDs.get('dao')!,
             grapes: [wine.grape],
             vintage: wine.vintage,
             style: wine.style,
@@ -274,7 +356,9 @@ async function main() {
           periodStart: '2026-09-01T00:00:00.000Z',
           periodEnd: '2026-12-31T23:59:59.000Z',
           publishAt: '2026-09-01T00:00:00.000Z',
-          narrative: richText('Granite, altitude and the growers who make patience tangible.'),
+          narrative: richText(
+            'A Portuguese wine discovery whose bottles and producers stay sealed until opening.',
+          ),
           eligiblePlans: [...planIDs.values()],
           wineSKUs: skuIDs,
           storyChapters: [
@@ -308,22 +392,31 @@ async function main() {
       })
   }
 
-  if (!(await findID('site-settings', 'siteName', 'Terrova')))
+  const siteSettingsID = await findID('site-settings', 'siteName', 'Terrova')
+  const siteSettingsData = {
+    brand: brandID,
+    siteName: 'Terrova',
+    siteUrl: process.env.WEB_URL ?? 'http://localhost:3000',
+    defaultTitle: 'Terrova — Wine, revealed slowly',
+    defaultDescription:
+      'Portuguese wine discoveries, kept a surprise until each monthly Terrova box is opened.',
+    supportEmail: 'hello@terrova.net',
+    ageGateEnabled: true,
+    minimumAge: 18,
+    shippingCountries: [{ countryCode: 'PT', label: 'Portugal' }],
+  }
+  if (siteSettingsID)
+    await payload.update({
+      collection: 'site-settings',
+      id: siteSettingsID,
+      overrideAccess: true,
+      data: siteSettingsData,
+    })
+  else
     await payload.create({
       collection: 'site-settings',
       overrideAccess: true,
-      data: {
-        brand: brandID,
-        siteName: 'Terrova',
-        siteUrl: process.env.WEB_URL ?? 'http://localhost:3000',
-        defaultTitle: 'Terrova — Wine, revealed slowly',
-        defaultDescription:
-          'A cinematic wine membership built around origin, season and independent producers.',
-        supportEmail: 'hello@terrova.net',
-        ageGateEnabled: true,
-        minimumAge: 18,
-        shippingCountries: [{ countryCode: 'PT', label: 'Portugal' }],
-      },
+      data: siteSettingsData,
     })
 
   if (!(await findID('journal-posts', 'slug', 'reading-a-landscape')))

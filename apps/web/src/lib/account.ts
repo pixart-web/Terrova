@@ -52,8 +52,8 @@ export async function loadAccountData(
       list('/api/orders?depth=2&limit=100&sort=-createdAt', token),
       list('/api/order-items?depth=2&limit=200', token),
       list('/api/addresses?depth=0&limit=100', token),
-      list('/api/cellar-entries?depth=3&limit=200&sort=-experiencedAt', token),
-      list('/api/ratings?depth=1&limit=200', token),
+      list('/api/cellar-entries?depth=0&limit=200&sort=-experiencedAt', token),
+      list('/api/ratings?depth=0&limit=200', token),
       list('/api/taste-signals?depth=0&limit=100&sort=-score', token),
       cmsRequest<Document>(`/api/customers/${customer.id}?depth=0`, {
         service: true,
@@ -102,8 +102,21 @@ export async function loadAccountData(
     isDefault: Boolean(address.isDefault),
   }))
 
+  const cellarWineIDs = [...new Set(cellar.map((entry) => String(relationID(entry.wine))))].filter(
+    Boolean,
+  )
+  const cellarWines = await Promise.all(
+    cellarWineIDs.map((id) =>
+      cmsRequest<Document>(`/api/wines/${encodeURIComponent(id)}?depth=2`, {
+        service: true,
+        cache: 'no-store',
+      }),
+    ),
+  )
+
   const mappedCellar: CellarItem[] = cellar.map((entry) => {
-    const wine = relation(entry.wine)
+    const wineID = relationID(entry.wine)
+    const wine = cellarWines.find((item) => String(item.id) === String(wineID))
     const rating = ratings.find((item) => String(relationID(item.wine)) === String(wine?.id))
     return {
       id: entry.id,

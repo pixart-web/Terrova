@@ -6,14 +6,13 @@ The complete seven-scene homepage currently uses original CSS/SVG art-direction 
 
 ## Replaceable components
 
-| Component           | Current study                             | Production replacement needed                                                                |
-| ------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `DiscoverBottle`    | Inline SVG glass/label silhouette         | Approved transparent bottle packshot and final Edition 01 label                              |
-| `TerrovaBox`        | Layered CSS lid, interior and base        | Final structural packaging renders for closed/open states, aligned to one shared perspective |
-| `BottleSet`         | Three wrappers around `IndividualBottle`  | Three transparent bottle packshots with consistent lighting and colour-managed glass         |
-| `IndividualBottle`  | CSS glass, foil and paper label           | Reusable responsive packshot or approved rendered bottle family                              |
-| `OriginLandscape`   | SVG contours, gradient sun and CSS ridges | Four art-directed landscape stills or restrained loops with desktop/mobile crops             |
-| `ProducerImageSlot` | Initials-based documentary frame          | Approved producer portraits with rights, focal metadata and responsive sources               |
+| Component          | Current study                             | Production replacement needed                                                                |
+| ------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `DiscoverBottle`   | Anonymous inline SVG bottle silhouette    | Approved anonymous bottle packshot without a commercial label or identifiable future wine    |
+| `TerrovaBox`       | Layered CSS lid, interior and base        | Final structural packaging renders for closed/open states, aligned to one shared perspective |
+| `BottleSet`        | Three wrappers around `IndividualBottle`  | Three transparent bottle packshots with consistent lighting and colour-managed glass         |
+| `IndividualBottle` | CSS glass, foil and paper label           | Reusable responsive packshot or approved rendered bottle family                              |
+| `OriginLandscape`  | SVG contours, gradient sun and CSS ridges | Five Portuguese landscape stills or restrained loops with desktop/mobile crops               |
 
 Process reuses `IndividualBottle` and `TerrovaBox` to create continuity from Origins without adding a new media dependency. Choose Your Journey reuses one `IndividualBottle` instance per plan in a shared stage; these are art-direction studies, not representations of plan inclusions.
 
@@ -32,7 +31,7 @@ Your Taste and Final CTA also reuse `IndividualBottle`. Their constellation/trac
 - The CSS box communicates opening and depth but is not a physically accurate packaging model.
 - Bottle glass, reflections and label paper are indicative rather than colour-accurate.
 - Landscapes intentionally communicate terrain and atmosphere without claiming documentary specificity.
-- Producer slots are spatial placeholders; they do not represent the named demo producers.
+- Public scene assets must not contain producer marks, commercial labels or clues to future box contents.
 - The cross-scene bottle handoff is a matched visual cut between isolated scene roots, not one persistent 3D object.
 - Journey bottle tones distinguish editorial atmospheres only. They do not communicate bottle count, inventory or contractual plan contents.
 - Taste signals and final coordinates are fictional art-direction content. They must not be presented as stored customer history when production data is connected later.

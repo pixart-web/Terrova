@@ -34,8 +34,8 @@ export function DiscoverScene() {
 
         <div className="discover-copy" data-discover-copy>
           <p>
-            A curated journey through remarkable wines, producers and places — delivered every
-            month.
+            A monthly surprise journey through Portuguese regions, native grapes and wines chosen to
+            be discovered only when the box is opened.
           </p>
           <Link className="discover-cta" href="/boxes">
             Explore the boxes <span aria-hidden="true">↗</span>

@@ -5,24 +5,23 @@ import type {
   BrandIdentity,
   EditorialPageContent,
   EntityID,
+  GrapeVarietySummary,
   JournalEntry,
   MediaAsset,
-  ProducerSummary,
   SiteSettings,
   SubscriptionPlan,
-  WineIdentity,
-  WineStyle,
+  WineRegionSummary,
 } from '@terrova/types'
 
 import {
   fixtureBoxes,
   fixtureBrand,
+  fixtureGrapes,
   fixtureJournal,
   fixturePages,
   fixturePlans,
-  fixtureProducers,
+  fixtureRegions,
   fixtureSiteSettings,
-  fixtureWines,
 } from './fixtures'
 
 type PayloadDocument = Record<string, unknown> & { id: EntityID }
@@ -88,36 +87,25 @@ function planFromPayload(doc: PayloadDocument): SubscriptionPlan {
   }
 }
 
-function producerFromPayload(doc: PayloadDocument): ProducerSummary {
+function regionFromPayload(doc: PayloadDocument): WineRegionSummary {
   return {
     id: doc.id,
     slug: text(doc.slug),
     name: text(doc.name),
-    region: text(relationship(doc.region)?.name) || undefined,
-    country: text(relationship(doc.country)?.name),
-    introduction: text(doc.introduction) || undefined,
-    portrait: media(doc.portrait),
+    tagline: text(doc.tagline),
+    description: text(doc.shortDescription),
   }
 }
 
-function wineFromPayload(doc: PayloadDocument): WineIdentity {
-  const grapes = Array.isArray(doc.grapes) ? doc.grapes : []
+function grapeFromPayload(doc: PayloadDocument): GrapeVarietySummary {
+  const aliases = Array.isArray(doc.aliases) ? doc.aliases : []
   return {
     id: doc.id,
-    brandId: relationshipID(doc.brand),
-    slug: text(doc.slug),
     name: text(doc.name),
-    producerId: relationshipID(doc.producer),
-    producerName: text(relationship(doc.producer)?.name) || undefined,
-    regionId: relationshipID(doc.region),
-    regionName: text(relationship(doc.region)?.name) || undefined,
-    countryName: text(relationship(doc.country)?.name) || undefined,
-    grapeIds: grapes.map(relationshipID),
-    grapeNames: grapes.map((item) => text(relationship(item)?.name)).filter(Boolean),
-    vintage: typeof doc.vintage === 'number' ? doc.vintage : undefined,
-    style: text(doc.style) ? (doc.style as WineStyle) : undefined,
-    introduction: text(doc.introduction) || undefined,
-    label: media(doc.label),
+    aliases: aliases.map((item) => text((item as Record<string, unknown>).name)).filter(Boolean),
+    type: (doc.colour ?? 'red') as GrapeVarietySummary['type'],
+    tagline: text(doc.tagline),
+    description: text(doc.shortDescription),
   }
 }
 
@@ -217,13 +205,6 @@ export class PayloadContentRepository implements ContentRepository {
       return docs.map((doc): BoxSummary => {
         const edition = relationship(doc.edition)
         const plan = relationship(doc.plan)
-        const skus = Array.isArray(doc.wineSKUs)
-          ? doc.wineSKUs.map(relationship).filter((item): item is PayloadDocument => Boolean(item))
-          : []
-        const wines = skus
-          .map((sku) => relationship(sku.wine))
-          .filter((item): item is PayloadDocument => Boolean(item))
-          .map(wineFromPayload)
         return {
           id: doc.id,
           name: text(doc.name),
@@ -237,38 +218,23 @@ export class PayloadContentRepository implements ContentRepository {
             hero: media(edition?.hero),
           },
           planCode: text(plan?.code),
-          wines,
         }
       })
     }, fixtureBoxes)
   }
 
-  async listPublishedProducers(brandId: EntityID) {
+  async listPublishedRegions() {
     return this.withFallback(
-      async () =>
-        (await this.list('producers', { 'where[brands][contains]': String(brandId) })).map(
-          producerFromPayload,
-        ),
-      fixtureProducers,
+      async () => (await this.list('regions')).map(regionFromPayload),
+      fixtureRegions,
     )
   }
 
-  async getPublishedProducer(brandId: EntityID, slug: string) {
-    return (await this.listPublishedProducers(brandId)).find((item) => item.slug === slug) ?? null
-  }
-
-  async listPublishedWines(brandId: EntityID) {
+  async listPublishedGrapes() {
     return this.withFallback(
-      async () =>
-        (await this.list('wines', { 'where[brand][equals]': String(brandId) })).map(
-          wineFromPayload,
-        ),
-      fixtureWines,
+      async () => (await this.list('grapes')).map(grapeFromPayload),
+      fixtureGrapes,
     )
-  }
-
-  async getPublishedWine(brandId: EntityID, slug: string) {
-    return (await this.listPublishedWines(brandId)).find((item) => item.slug === slug) ?? null
   }
 
   async listPublishedJournalEntries(brandId: EntityID) {

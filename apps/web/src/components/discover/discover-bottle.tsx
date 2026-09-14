@@ -4,7 +4,7 @@ export function DiscoverBottle() {
       className="discover-bottle"
       viewBox="0 0 420 960"
       role="img"
-      aria-label="Temporary Terrova bottle study, Edition 01"
+      aria-label="Anonymous fictional bottle silhouette"
     >
       <defs>
         <linearGradient id="bottleGlass" x1="0" x2="1">
@@ -36,17 +36,10 @@ export function DiscoverBottle() {
       <rect x="147" y="10" width="126" height="56" rx="8" fill="#121712" />
       <rect x="137" y="484" width="146" height="238" rx="2" fill="url(#labelPaper)" />
       <path d="M159 507h102" stroke="#171714" strokeOpacity="0.34" />
-      <text x="210" y="563" textAnchor="middle" fill="#171714" fontSize="22" letterSpacing="8">
-        TERROVA
-      </text>
-      <text x="210" y="613" textAnchor="middle" fill="#632f3d" fontSize="12" letterSpacing="4">
-        EDITION 01
-      </text>
+      <path d="M168 558h84M180 582h60" stroke="#171714" strokeOpacity="0.5" />
       <circle cx="210" cy="662" r="18" fill="none" stroke="#b65f43" strokeWidth="1.5" />
       <path d="M210 645v34M193 662h34" stroke="#b65f43" strokeWidth="1" />
-      <text x="210" y="700" textAnchor="middle" fill="#171714" fontSize="9" letterSpacing="3">
-        ATLANTIC EDGE
-      </text>
+      <path d="M180 699h60" stroke="#171714" strokeOpacity="0.34" />
     </svg>
   )
 }

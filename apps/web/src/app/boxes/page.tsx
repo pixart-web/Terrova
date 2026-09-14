@@ -7,7 +7,8 @@ import { contentRepository, requestBrand } from '@/lib/content'
 
 export const metadata: Metadata = {
   title: 'Wine discovery boxes',
-  description: 'Choose a monthly Terrova journey shaped by remarkable wines, makers and places.',
+  description:
+    'Choose a monthly surprise box of Portuguese wines, revealed only when it reaches you.',
   alternates: { canonical: '/boxes' },
 }
 
@@ -43,7 +44,7 @@ export default async function BoxesPage({
             not a routine.
           </>
         }
-        introduction="Each Terrova edition studies place through a small constellation of bottles. The point is not more wine. It is a wider view."
+        introduction="Each Terrova box is a sealed Portuguese wine discovery. You choose the journey; the bottles and producers remain unknown until you open it."
       />
       {query.error && (
         <p className="notice" role="alert">
@@ -112,11 +113,11 @@ export default async function BoxesPage({
 
       <section className="edition-ledger" aria-labelledby="edition-title">
         <div className="section-heading">
-          <p>02 / Current edition</p>
+          <p>02 / The surprise</p>
           <h2 id="edition-title">
-            A place,
+            A discovery,
             <br />
-            opened slowly.
+            kept sealed.
           </h2>
         </div>
         {boxes.length ? (
@@ -125,23 +126,15 @@ export default async function BoxesPage({
               <p>
                 {box.edition.period} / {box.edition.code}
               </p>
-              <h3>{box.edition.title}</h3>
-              <p>{box.edition.introduction}</p>
-              <ul>
-                {box.wines.map((wine) => (
-                  <li key={String(wine.id)}>
-                    <Link href={`/wines/${wine.slug}`}>{wine.name}</Link>
-                    <span>{wine.regionName}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3>Meet the wines when the box opens.</h3>
+              <p>
+                Every edition brings together Portuguese regions and native grapes without
+                previewing its producers, labels or bottles in advance.
+              </p>
             </article>
           ))
         ) : (
-          <p>
-            No live edition is published yet. Membership remains available; the next edition will
-            appear after editorial approval.
-          </p>
+          <p>Membership remains available while the next surprise edition is curated in private.</p>
         )}
       </section>
 

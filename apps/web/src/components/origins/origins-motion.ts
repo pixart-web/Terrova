@@ -30,7 +30,7 @@ export const createOriginsTimeline: SceneMotionSetup = ({ root, gsap, mode }) =>
       .to(intro, { yPercent: -22, opacity: 0.16, duration: 0.18 }, 0.09)
 
     entries.forEach((entry, index) => {
-      const start = 0.14 + index * 0.19
+      const start = 0.14 + index * (0.64 / Math.max(entries.length - 1, 1))
       const landscape = landscapes[index]
       const marker = progress[index]
 
@@ -51,14 +51,14 @@ export const createOriginsTimeline: SceneMotionSetup = ({ root, gsap, mode }) =>
 
       if (index < entries.length - 1) {
         timeline
-          .to(entry, { xPercent: -7, opacity: 0, duration: 0.06 }, start + 0.13)
-          .to(landscape, { opacity: 0, scale: 1.04, duration: 0.06 }, start + 0.13)
+          .to(entry, { xPercent: -7, opacity: 0, duration: 0.06 }, start + 0.11)
+          .to(landscape, { opacity: 0, scale: 1.04, duration: 0.06 }, start + 0.11)
       }
     })
 
     timeline
-      .to(bottle, { xPercent: 18, yPercent: -7, scale: 0.86, duration: 0.18 }, 0.75)
-      .fromTo(handoff, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.12 }, 0.86)
+      .to(bottle, { xPercent: 18, yPercent: -7, scale: 0.86, duration: 0.16 }, 0.82)
+      .fromTo(handoff, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.1 }, 0.9)
 
     return
   }

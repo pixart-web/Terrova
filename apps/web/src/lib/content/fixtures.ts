@@ -2,11 +2,11 @@ import type {
   BoxSummary,
   BrandIdentity,
   EditorialPageContent,
+  GrapeVarietySummary,
   JournalEntry,
-  ProducerSummary,
   SiteSettings,
   SubscriptionPlan,
-  WineIdentity,
+  WineRegionSummary,
 } from '@terrova/types'
 
 export const fixtureBrand: BrandIdentity = {
@@ -25,7 +25,7 @@ export const fixturePlans: SubscriptionPlan[] = [
     code: 'taster',
     name: 'Taster',
     positioning: 'Start somewhere unexpected.',
-    description: 'A first monthly rhythm for curious drinkers.',
+    description: 'A first monthly surprise of Portuguese wines for curious drinkers.',
     cadence: 'monthly',
     price: { amount: 2999, currency: 'EUR' },
     externalPriceId: 'price_test_terrova_taster',
@@ -37,7 +37,8 @@ export const fixturePlans: SubscriptionPlan[] = [
     code: 'drinker',
     name: 'Drinker',
     positioning: 'Go further.',
-    description: 'The balanced Terrova journey: more room for contrast, context and discovery.',
+    description:
+      'A balanced monthly surprise with more room for Portuguese contrast and discovery.',
     cadence: 'monthly',
     price: { amount: 4999, currency: 'EUR' },
     mostPopular: true,
@@ -51,7 +52,7 @@ export const fixturePlans: SubscriptionPlan[] = [
     name: 'Premium',
     positioning: 'Drink something remarkable.',
     description:
-      'Distinctive bottles selected for rarity, precision and a compelling sense of place.',
+      'Distinctive Portuguese bottles kept secret until opening, selected for rarity and precision.',
     cadence: 'monthly',
     price: { amount: 6999, currency: 'EUR' },
     externalPriceId: 'price_test_terrova_premium',
@@ -59,65 +60,94 @@ export const fixturePlans: SubscriptionPlan[] = [
   },
 ]
 
-export const fixtureProducers: ProducerSummary[] = [
+export const fixtureRegions: WineRegionSummary[] = [
   {
-    id: 'producer-1',
-    slug: 'casa-do-vale',
-    name: 'Casa do Vale',
-    region: 'Douro',
-    country: 'Portugal',
-    introduction: 'High parcels, old vines and a patient reading of schist.',
+    id: 'region-douro',
+    slug: 'douro',
+    name: 'Douro',
+    tagline: 'Steep terraces. Ancient vines. Unmistakable character.',
+    description:
+      'Carved by the Douro River, this dramatic landscape of schist slopes creates wines with depth, structure and a powerful sense of place.',
   },
   {
-    id: 'producer-2',
-    slug: 'atelier-des-rives',
-    name: 'Atelier des Rives',
-    region: 'Loire',
-    country: 'France',
-    introduction: 'A small cellar shaped by limestone, river air and quiet precision.',
+    id: 'region-alentejo',
+    slug: 'alentejo',
+    name: 'Alentejo',
+    tagline: 'Wide horizons. Warm days. Generous wines.',
+    description:
+      'Across sunlit plains and ancient soils, the Alentejo produces expressive wines shaped by Mediterranean warmth, altitude and remarkable local diversity.',
   },
   {
-    id: 'producer-3',
-    slug: 'etna-nord',
-    name: 'Etna Nord',
-    region: 'Etna',
-    country: 'Italy',
-    introduction: 'Volcanic altitude translated into lifted, mineral reds.',
+    id: 'region-vinho-verde',
+    slug: 'vinho-verde',
+    name: 'Vinho Verde',
+    tagline: 'Green landscapes shaped by the Atlantic.',
+    description:
+      "Portugal's northwest is a land of freshness and vibrant native grapes, where cool Atlantic influence gives the wines energy, fragrance and natural acidity.",
+  },
+  {
+    id: 'region-dao',
+    slug: 'dao',
+    name: 'Dão',
+    tagline: 'Mountain vineyards. Granite soils. Quiet elegance.',
+    description:
+      'Protected by surrounding mountains, the Dão is known for freshness, balance and refined wines shaped by altitude, granite and slow ripening.',
+  },
+  {
+    id: 'region-bairrada',
+    slug: 'bairrada',
+    name: 'Bairrada',
+    tagline: 'Atlantic air. Limestone soils. Wines built on freshness.',
+    description:
+      'Between the mountains and the ocean, Bairrada combines cool maritime influence with distinctive native grapes and a long tradition of age-worthy wines and sparkling wine.',
   },
 ]
 
-export const fixtureWines: WineIdentity[] = [
+export const fixtureGrapes: GrapeVarietySummary[] = [
   {
-    id: 'wine-1',
-    brandId: fixtureBrand.id,
-    slug: 'linha-de-xisto',
-    name: 'Linha de Xisto',
-    producerId: fixtureProducers[0].id,
-    producerName: fixtureProducers[0].name,
-    regionId: 'douro',
-    regionName: 'Douro',
-    countryName: 'Portugal',
-    grapeIds: ['touriga-franca'],
-    grapeNames: ['Touriga Franca'],
-    vintage: 2022,
-    style: 'red',
-    introduction: 'Savoury red fruit, mountain herbs and the graphite line of schist.',
+    id: 'grape-touriga-nacional',
+    name: 'Touriga Nacional',
+    aliases: [],
+    type: 'red',
+    tagline: 'Floral, structured and unmistakably Portuguese.',
+    description:
+      "One of Portugal's iconic native grapes, combining dark fruit, floral aromas, freshness and remarkable ageing potential.",
   },
   {
-    id: 'wine-2',
-    brandId: fixtureBrand.id,
-    slug: 'river-stone',
-    name: 'River Stone',
-    producerId: fixtureProducers[1].id,
-    producerName: fixtureProducers[1].name,
-    regionId: 'loire',
-    regionName: 'Loire',
-    countryName: 'France',
-    grapeIds: ['chenin-blanc'],
-    grapeNames: ['Chenin Blanc'],
-    vintage: 2023,
-    style: 'white',
-    introduction: 'A bright, mineral white with waxed citrus and river-stone tension.',
+    id: 'grape-alvarinho',
+    name: 'Alvarinho',
+    aliases: [],
+    type: 'white',
+    tagline: 'Fragrant, precise and full of Atlantic freshness.',
+    description:
+      'A vibrant northern variety known for citrus, stone fruit and floral aromas, balanced by striking acidity and concentration.',
+  },
+  {
+    id: 'grape-arinto',
+    name: 'Arinto',
+    aliases: [],
+    type: 'white',
+    tagline: 'Freshness with a distinctly Portuguese edge.',
+    description:
+      'Known for its vibrant acidity and citrus character, Arinto thrives across Portugal and remains remarkably fresh even in warmer regions.',
+  },
+  {
+    id: 'grape-baga',
+    name: 'Baga',
+    aliases: [],
+    type: 'red',
+    tagline: 'Character, tension and remarkable longevity.',
+    description:
+      'The signature red grape of Bairrada, producing structured wines with vivid acidity, firm tannins and impressive ability to evolve with age.',
+  },
+  {
+    id: 'grape-aragonez',
+    name: 'Aragonez',
+    aliases: ['Tinta Roriz'],
+    type: 'red',
+    tagline: 'Ripe fruit, spice and many regional identities.',
+    description:
+      'Known by different names across Portugal, this versatile variety brings fruit, structure and spice to wines from north to south.',
   },
 ]
 
@@ -141,17 +171,16 @@ export const fixtureJournal: JournalEntry[] = [
 export const fixtureBoxes: BoxSummary[] = [
   {
     id: 'box-1',
-    name: 'Atlantic & Altitude',
+    name: 'Terrova surprise edition',
     edition: {
       id: 'edition-1',
       code: 'TRV-2026-09',
       slug: 'atlantic-and-altitude',
-      title: 'Atlantic & Altitude',
+      title: 'Terrova surprise edition',
       period: 'September 2026',
-      introduction: 'Two ways landscape leaves a line in the glass.',
+      introduction: 'A Portuguese wine discovery kept sealed until opening.',
     },
     planCode: 'drinker',
-    wines: fixtureWines,
   },
 ]
 
@@ -159,7 +188,8 @@ export const fixtureSiteSettings: SiteSettings = {
   siteName: 'Terrova',
   siteUrl: 'https://terrova.net',
   defaultTitle: 'Terrova — Discover wine beyond the label',
-  defaultDescription: 'Remarkable wines, producers and places — delivered as a monthly journey.',
+  defaultDescription:
+    'Portuguese wine discoveries, kept a surprise until each monthly Terrova box is opened.',
   ageGateEnabled: true,
   minimumAge: 18,
   shippingCountries: ['PT'],

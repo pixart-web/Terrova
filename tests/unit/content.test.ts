@@ -3,6 +3,8 @@ import {
   normalizeHostname,
   resolveBrandFromRegistry,
 } from '../../packages/content/src/index'
+import { originJourney } from '../../apps/web/src/components/origins/origins-content'
+import { fixtureGrapes, fixtureRegions } from '../../apps/web/src/lib/content/fixtures'
 import { describe, expect, it } from 'vitest'
 
 const brand = {
@@ -22,6 +24,27 @@ describe('multi-brand content resolution', () => {
   it('resolves known hosts and safely falls back to the configured brand', () => {
     expect(resolveBrandFromRegistry([brand], 'www.terrova.net').resolvedFrom).toBe('hostname')
     expect(resolveBrandFromRegistry([brand], 'preview.invalid', 'terrova').brand.id).toBe(1)
+  })
+})
+
+describe('Portuguese discovery content', () => {
+  it('uses the approved five-region order across the homepage and CMS fallback', () => {
+    const expected = ['Douro', 'Alentejo', 'Vinho Verde', 'Dão', 'Bairrada']
+    expect(originJourney.map(({ region }) => region)).toEqual(expected)
+    expect(fixtureRegions.map(({ name }) => name)).toEqual(expected)
+    expect(JSON.stringify({ originJourney, fixtureRegions })).not.toMatch(/Loire|Etna|Priorat/)
+  })
+
+  it('publishes only the approved native-grape set and preserves the Aragonez alias', () => {
+    expect(fixtureGrapes.map(({ name }) => name)).toEqual([
+      'Touriga Nacional',
+      'Alvarinho',
+      'Arinto',
+      'Baga',
+      'Aragonez',
+    ])
+    expect(fixtureGrapes.find(({ name }) => name === 'Aragonez')?.aliases).toEqual(['Tinta Roriz'])
+    expect(JSON.stringify(fixtureGrapes)).not.toMatch(/Encruzado/)
   })
 })
 
